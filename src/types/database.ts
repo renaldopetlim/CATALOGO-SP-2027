@@ -58,6 +58,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      brands: {
+        Row: {
+          id: string;
+          name: string;
+          logo_url: string | null;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          logo_url?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          logo_url?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           id: string;
@@ -93,6 +117,7 @@ export type Database = {
           id: string;
           title: string;
           brand: string | null;
+          brand_id: string | null;
           badge: string | null;
           category_id: string;
           /** Mantida no banco, sem uso na interface atual. */
@@ -110,6 +135,7 @@ export type Database = {
           id?: string;
           title: string;
           brand?: string | null;
+          brand_id?: string | null;
           badge?: string | null;
           category_id: string;
           price?: number | null;
@@ -126,6 +152,7 @@ export type Database = {
           id?: string;
           title?: string;
           brand?: string | null;
+          brand_id?: string | null;
           badge?: string | null;
           category_id?: string;
           price?: number | null;
@@ -139,6 +166,13 @@ export type Database = {
           search_text?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'catalog_items_brand_id_fkey';
+            columns: ['brand_id'];
+            isOneToOne: false;
+            referencedRelation: 'brands';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'catalog_items_category_id_fkey';
             columns: ['category_id'];

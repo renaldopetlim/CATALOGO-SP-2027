@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { ServiceError, toServiceError } from '../lib/errors';
 import { emptyToNull, isHttpUrl, toSearchTerms } from '../lib/format';
 import { deleteCatalogImage, isCatalogStorageUrl } from './storageService';
+import type { BrandSummary } from '../types/brands';
 import type { Json, TableUpdate } from '../types/database';
 import {
   isCatalogBadge,
@@ -23,21 +24,23 @@ import {
  * pela coluna da categoria (`category.is_active`).
  */
 const ITEM_SELECT =
-  'id, title, brand, badge, category_id, image_url, tags, specifications, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active), codes:catalog_item_codes(id, code, description, packaging, sort_order)';
+  'id, title, brand, brand_id, badge, category_id, image_url, tags, specifications, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active), codes:catalog_item_codes(id, code, description, packaging, sort_order), brand_ref:brands(id, name, logo_url)';
 
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
 
-/** Linha como vem do banco (badge texto livre, ficha técnica em JSON). */
-type ItemRow = Omit<CatalogItemWithCategory, 'badge' | 'specifications'> & {
+/** Linha como vem do banco (badge texto livre, ficha técnica em JSON, marca embutida). */
+type ItemRow = Omit<CatalogItemWithCategory, 'badge' | 'specifications' | 'brandInfo'> & {
   badge: string | null;
   specifications: Json;
+  brand_ref: BrandSummary | null;
 };
 
 /** Converte a linha do banco no tipo de domínio (selo validado, ficha técnica tipada, códigos ordenados). */
-function toItem(row: ItemRow): CatalogItemWithCategory {
+function toItem({ brand_ref, ...row }: ItemRow): CatalogItemWithCategory {
   return {
     ...row,
+    brandInfo: brand_ref,
     badge: isCatalogBadge(row.badge) ? row.badge : null,
     specifications: parseSpecifications(row.specifications),
     codes: [...row.codes].sort((a, b) => a.sort_order - b.sort_order),
@@ -141,12 +144,6 @@ function validateTitle(title: string): string {
   return trimmed;
 }
 
-function validateBrand(brand: string | null | undefined): string | null {
-  const value = emptyToNull(brand);
-  if (value && value.length > 120) throw new ServiceError('validation', 'A marca deve ter até 120 caracteres.');
-  return value;
-}
-
 function validateCategoryId(categoryId: string): string {
   if (!categoryId.trim()) throw new ServiceError('validation', 'Selecione uma categoria.');
   return categoryId;
@@ -216,7 +213,7 @@ export async function saveCatalogItemRecord(
   try {
     const item = {
       title: validateTitle(input.title),
-      brand: validateBrand(input.brand),
+      brand_id: input.brand_id || null,
       category_id: validateCategoryId(input.category_id),
       badge: input.badge ?? null,
       image_url: validateImageUrl(input.image_url),

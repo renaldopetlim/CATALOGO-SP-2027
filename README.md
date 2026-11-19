@@ -35,6 +35,8 @@ por qualquer um dos seus códigos.
    - `20261119030000_produtos_codigos.sql`: marca, selo, ficha técnica e **vários códigos por produto**.
      Os produtos que já existirem são migrados: o SKU vira o primeiro código e as descrições viram ficha técnica.
    - `20261119040000_base_sistema.sql`: base do sistema interno (importação de planilha) e conciliação com o catálogo.
+   - `20261119050000_marcas.sql`: cadastro de marcas com logo, vinculado aos produtos. As marcas atuais, que estão
+     em texto, são criadas e vinculadas automaticamente.
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
@@ -118,6 +120,21 @@ cd catalogo-sp-2027
 ```bash
 npm install @supabase/supabase-js react-router-dom
 ```
+
+## Marcas e logos
+
+Em **Marcas**, no painel, você cadastra cada marca com o nome (único, sem diferenciar maiúsculas), o logo e o
+status (ativa ou inativa).
+
+- **Logo:** upload ou URL. Os arquivos vão para a pasta `brands/` do bucket `catalog-images` e são exibidos com
+  fundo quadriculado, para mostrar a transparência. Recomendado: PNG ou WebP com fundo transparente, formato
+  horizontal (ex.: 400 × 160). SVG não é aceito, porque pode executar scripts.
+- **No formulário do produto:** a marca é escolhida numa lista e pode ser criada na hora ("+ Nova marca").
+- **Pendentes no catálogo:** a marca vinda do sistema é reconhecida automaticamente quando já está cadastrada.
+- **Na vitrine:** o logo aparece ao lado do nome da marca no card e nos detalhes. Sem logo, ou com a marca
+  inativa, aparece só o nome.
+- **Exclusão:** uma marca com produtos não pode ser excluída. Inative-a ou troque a marca dos produtos.
+- **Renomear** uma marca atualiza todos os produtos dela.
 
 ## Importação do sistema interno e conciliação
 

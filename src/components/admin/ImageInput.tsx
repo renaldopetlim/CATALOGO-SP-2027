@@ -14,12 +14,26 @@ type ImageInputProps = {
   onChange: (value: ImageValue) => void;
   disabled?: boolean;
   error?: string | null;
+  /** Recomendação exibida abaixo dos controles (ex.: proporção do logo). */
+  hint?: string;
+  /** Texto da pré-visualização para leitores de tela. */
+  previewAlt?: string;
+  /** Classe extra na pré-visualização (ex.: fundo neutro para logos). */
+  previewClassName?: string;
 };
 
 const ACCEPT = Object.keys(ALLOWED_IMAGE_TYPES).join(',');
 
 /** Escolha da imagem do item: upload de arquivo ou URL externa, com pré-visualização. */
-export function ImageInput({ value, onChange, disabled = false, error = null }: ImageInputProps) {
+export function ImageInput({
+  value,
+  onChange,
+  disabled = false,
+  error = null,
+  hint,
+  previewAlt = 'Pré-visualização',
+  previewClassName,
+}: ImageInputProps) {
   const fileId = useId();
   const urlId = useId();
   const [tab, setTab] = useState<'file' | 'url'>(
@@ -46,8 +60,8 @@ export function ImageInput({ value, onChange, disabled = false, error = null }: 
 
   return (
     <div className="image-input">
-      <div className="img-preview">
-        <ItemImage src={preview} alt="Pré-visualização" loading="eager" />
+      <div className={`img-preview${previewClassName ? ` ${previewClassName}` : ''}`}>
+        <ItemImage src={preview} alt={previewAlt} loading="eager" />
       </div>
 
       <div className="image-controls">
@@ -106,6 +120,7 @@ export function ImageInput({ value, onChange, disabled = false, error = null }: 
         )}
 
         {shownError && <div className="msg">{shownError}</div>}
+        {hint && <p className="hint">{hint}</p>}
 
         {(value.mode === 'file' || value.url) && (
           <button

@@ -464,11 +464,70 @@ button:disabled {
   overflow: hidden;
 }
 
-/* Marca do produto no card */
+/* Marca do produto no card (logo opcional + nome) */
 .item-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--mut);
+}
+
+.item-brand > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Logo da marca: caixa de proporção fixa, imagem contida; iniciais como fallback */
+.brand-logo {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tag);
+}
+
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 2px;
+}
+
+.brand-logo.sm {
+  width: 40px;
+  height: 20px;
+}
+
+.brand-logo.md {
+  width: 64px;
+  height: 32px;
+}
+
+.brand-logo.lg {
+  width: 120px;
+  height: 60px;
+}
+
+.brand-logo.fallback {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.brand-logo.sm.fallback {
+  font-size: 0.6rem;
+}
+
+.brand-logo.md.fallback {
+  font-size: 0.75rem;
 }
 
 /* Etiqueta: variação compacta da legend (navy + branco) */
@@ -695,6 +754,9 @@ button:disabled {
 }
 
 .detail-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.9rem;
   color: var(--mut);
 }
