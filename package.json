@@ -9,6 +9,7 @@
     "typecheck": "tsc -b",
     "lint": "oxlint",
     "check": "tsc -b && oxlint",
+    "check:env": "node scripts/check-supabase-env.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
