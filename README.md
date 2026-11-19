@@ -149,6 +149,16 @@ No painel, em **Sistema interno**:
   cadastrado** (em nenhum produto) ou **fora do ar** (produto ou categoria inativa). Tem busca por código,
   descrição ou marca. **+ Cadastrar no catálogo** abre o formulário de produto já preenchido com código, descrição
   e marca.
+- **Vários códigos num único card:** marque os códigos não cadastrados (o checkbox do cabeçalho marca todos os
+  visíveis; Shift+clique marca um intervalo). A seleção continua ao trocar de página ou de busca. A barra no
+  rodapé mostra a quantidade e o botão **Criar card com selecionados**, que abre o formulário com:
+  - todos os códigos marcados (código e descrição; a embalagem fica para completar), que podem ser reordenados,
+    removidos ou complementados;
+  - o título sugerido a partir do início comum das descrições (editável);
+  - a marca selecionada quando todos têm a mesma; com marcas diferentes, um aviso com atalhos para escolher a
+    principal.
+
+  Ao salvar, os códigos saem da lista de pendentes na hora e a seleção é limpa.
 
 A base do sistema só é visível para administradores.
 

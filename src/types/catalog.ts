@@ -175,3 +175,20 @@ export type DeleteItemResult = {
   /** `false` se o item foi excluído, mas a imagem do Storage não pôde ser removida. */
   imageRemoved: boolean;
 };
+
+/**
+ * Valores iniciais de um produto novo vindos de fora do formulário
+ * (ex.: um ou vários códigos da base do sistema, na aba Pendentes).
+ */
+export type ItemFormPrefill = {
+  title?: string;
+  /** Explica de onde veio o título sugerido (exibido sob o campo). */
+  titleHint?: string;
+  /** Marca única dos registros: selecionada se já estiver cadastrada. */
+  brand?: string;
+  /** Marcas diferentes entre os registros: o admin escolhe a principal. */
+  brandSuggestions?: string[];
+  codes?: Array<{ code: string; description?: string; packaging?: string }>;
+  /** Subtítulo da gaveta (resumo da origem dos dados). */
+  subtitle?: string;
+};

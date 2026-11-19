@@ -1177,6 +1177,106 @@ ul.import-error {
 }
 
 /* --------------------------------------------------------------------------
+   Seleção múltipla (aba Pendentes)
+   -------------------------------------------------------------------------- */
+.admin-table th.col-check,
+.admin-table td.col-check {
+  width: 1%;
+  padding-right: 4px;
+}
+
+.row-check {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--acc);
+  cursor: pointer;
+}
+
+.row-check:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
+}
+
+.admin-table tbody tr.is-selected td,
+.admin-table tbody tr.is-selected:hover td {
+  background: color-mix(in srgb, var(--acc) 9%, var(--card));
+}
+
+.admin-table tbody tr.is-selected td:first-child {
+  box-shadow: inset 3px 0 0 var(--acc);
+}
+
+/* Barra de ação: rodapé fixo da área principal enquanto houver marcados */
+.selection-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 10px var(--admin-gutter);
+  background: var(--card);
+  border-top: 2px solid var(--acc);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.selection-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 280px;
+}
+
+.selection-info strong {
+  color: var(--ink);
+}
+
+.selection-detail {
+  font-size: 0.8rem;
+  color: var(--mut);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selection-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Marcas sugeridas no formulário (códigos de marcas diferentes) */
+.brand-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+}
+
+.brand-suggestions > span {
+  flex-basis: 100%;
+}
+
+.brand-suggestions .chip {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.brand-suggestions .chip[aria-pressed="true"] {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+}
+
+/* --------------------------------------------------------------------------
    7. Notebooks (< 1366px): mais espaço para a tabela
    -------------------------------------------------------------------------- */
 @media (max-width: 1365px) {

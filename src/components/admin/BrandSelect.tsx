@@ -14,13 +14,18 @@ type BrandSelectProps = {
    * Se existir uma marca com esse nome, ela é selecionada; senão, oferece criar.
    */
   hintName?: string;
+  /**
+   * Várias marcas possíveis (ex.: códigos de marcas diferentes agrupados num card).
+   * Nada é selecionado sozinho: o admin escolhe a principal.
+   */
+  suggestions?: readonly string[];
   disabled?: boolean;
 };
 
 const sameName = (a: string, b: string) => stripAccents(a).trim().toLowerCase() === stripAccents(b).trim().toLowerCase();
 
 /** Seleção de marca cadastrada, com criação rápida sem sair do formulário de produto. */
-export function BrandSelect({ value, onChange, hintName = '', disabled = false }: BrandSelectProps) {
+export function BrandSelect({ value, onChange, hintName = '', suggestions = [], disabled = false }: BrandSelectProps) {
   const selectId = useId();
   const newId = useId();
   const { brands, status, update } = useAdminBrands();
@@ -39,6 +44,12 @@ export function BrandSelect({ value, onChange, hintName = '', disabled = false }
     hintApplied.current = true;
     onChange(hintMatch.id);
   }, [status, value, hintMatch, onChange]);
+
+  const pickSuggestion = (name: string) => {
+    const match = brands.find((brand) => sameName(brand.name, name));
+    if (match) onChange(match.id);
+    else openCreate(name);
+  };
 
   // Ativas + a marca atual (mesmo inativa), em ordem alfabética.
   const options = brands.filter((brand) => brand.is_active || brand.id === value);
@@ -104,6 +115,29 @@ export function BrandSelect({ value, onChange, hintName = '', disabled = false }
             Criar “{hintName}”
           </button>
         </p>
+      )}
+
+      {!creating && suggestions.length > 1 && status === 'success' && (
+        <div className={`hint brand-suggestions${value ? '' : ' warn'}`} role="note">
+          <span>{value ? 'Marcas dos códigos selecionados:' : 'Os códigos selecionados têm marcas diferentes. Escolha a marca principal:'}</span>
+          {suggestions.map((name) => {
+            const match = brands.find((brand) => sameName(brand.name, name)) ?? null;
+            const current = match !== null && match.id === value;
+            return (
+              <button
+                key={name}
+                type="button"
+                className={`chip chip-sm${current ? ' on' : ''}`}
+                aria-pressed={current}
+                disabled={disabled}
+                title={match ? `Usar ${match.name}` : `“${name}” ainda não está cadastrada: criar`}
+                onClick={() => pickSuggestion(name)}
+              >
+                {match ? match.name : `+ ${name}`}
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {creating && (

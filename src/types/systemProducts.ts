@@ -113,3 +113,10 @@ export type ReconciliationListResult = {
 };
 
 export type ReconciliationSummary = Record<ReconciliationStatus, number> & { total: number };
+
+/**
+ * Seleção na aba Pendentes, indexada pelo código (único na base do sistema).
+ * Guarda o registro inteiro para montar o card mesmo que a linha saia da
+ * página ou da busca atual.
+ */
+export type PendingSelection = ReadonlyMap<string, ReconciliationRow>;

@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { AdminTopbar } from '../../components/admin/AdminTopbar';
-import { ItemForm, type ItemFormPrefill } from '../../components/admin/ItemForm';
+import { ItemForm } from '../../components/admin/ItemForm';
+import { PendingSelectionBar } from '../../components/admin/PendingSelectionBar';
 import { SearchBar } from '../../components/catalog/SearchBar';
 import { DateCell } from '../../components/admin/DateCell';
 import { EmptyState, ErrorState } from '../../components/ui/StateMessage';
@@ -9,7 +10,9 @@ import { Toast } from '../../components/ui/Toast';
 import { useAdminCategories } from '../../hooks/useAdminCategories';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useReconciliation } from '../../hooks/useReconciliation';
+import { usePendingSelection, type HeaderCheckState } from '../../hooks/usePendingSelection';
 import { useToast } from '../../hooks/useToast';
+import { buildPrefill, isSelectable } from '../../lib/pendingGroup';
 import type { ReconciliationFilter, ReconciliationRow, ReconciliationStatus } from '../../types/systemProducts';
 
 const PAGE_SIZE = 50;
@@ -35,13 +38,27 @@ function isFilter(value: string | null): value is ReconciliationFilter {
   return value === 'pending' || value === 'missing' || value === 'inactive' || value === 'published';
 }
 
-/** Valores do formulário de produto a partir de um registro da base do sistema. */
-function prefillFrom(row: ReconciliationRow): ItemFormPrefill {
-  return {
-    title: row.description,
-    brand: row.brand,
-    codes: [{ code: row.code, description: row.description }],
-  };
+/** Card a criar: um registro (ação da linha) ou a seleção inteira. */
+type Creating = { source: 'row' | 'selection'; rows: ReconciliationRow[] };
+
+/** Checkbox "Selecionar todos os visíveis", com o estado intermediário (alguns marcados). */
+function HeaderCheckbox({ state, disabled, onToggle }: { state: HeaderCheckState; disabled: boolean; onToggle: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (ref.current) ref.current.indeterminate = state === 'some';
+  }, [state]);
+  return (
+    <input
+      ref={ref}
+      type="checkbox"
+      className="row-check"
+      checked={state === 'all'}
+      disabled={disabled}
+      onChange={onToggle}
+      aria-label="Selecionar todos os não cadastrados visíveis"
+      title={disabled ? 'Nenhum código não cadastrado nesta lista' : 'Selecionar todos os visíveis'}
+    />
+  );
 }
 
 export function AdminPendingPage() {
@@ -71,7 +88,7 @@ export function AdminPendingPage() {
   );
   const setSearch = useCallback((value: string) => updateParams({ q: value.trim() || null, pagina: null }), [updateParams]);
 
-  const { list, summary, status, error, reload } = useReconciliation({
+  const { list, summary, status, error, reload, markCataloged } = useReconciliation({
     filter,
     search,
     limit: PAGE_SIZE,
@@ -79,7 +96,15 @@ export function AdminPendingPage() {
   });
   const categories = useAdminCategories();
   const { toast, show, dismiss } = useToast();
-  const [creating, setCreating] = useState<ReconciliationRow | null>(null);
+  const [creating, setCreating] = useState<Creating | null>(null);
+  const visibleRows = list?.rows ?? [];
+  const selection = usePendingSelection(visibleRows);
+  const selectedRows = [...selection.selected.values()];
+  const anySelectable = visibleRows.some(isSelectable);
+
+  const onCheckClick = (row: ReconciliationRow) => (event: MouseEvent<HTMLInputElement>) => {
+    selection.toggle(row, { range: event.shiftKey });
+  };
 
   const total = list?.total ?? 0;
   const pages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
@@ -168,9 +193,12 @@ export function AdminPendingPage() {
 
         {status === 'success' && list && list.rows.length > 0 && (
           <>
-            <table className="admin-table">
+            <table className="admin-table pending-table">
               <thead>
                 <tr>
+                  <th scope="col" className="col-check">
+                    <HeaderCheckbox state={selection.headerState} disabled={!anySelectable} onToggle={selection.toggleVisible} />
+                  </th>
                   <th scope="col">Código</th>
                   <th scope="col">Descrição</th>
                   <th scope="col">Marca</th>
@@ -184,8 +212,23 @@ export function AdminPendingPage() {
               <tbody>
                 {list.rows.map((row) => {
                   const info = STATUS_INFO[row.status];
+                  const selectable = isSelectable(row);
+                  const checked = selection.isSelected(row.code);
                   return (
-                    <tr key={row.code}>
+                    <tr key={row.code} className={checked ? 'is-selected' : undefined} aria-selected={selectable ? checked : undefined}>
+                      <td className="col-check">
+                        <input
+                          type="checkbox"
+                          className="row-check"
+                          checked={checked}
+                          disabled={!selectable}
+                          // onClick (e não onChange) para ler o Shift: marca um intervalo.
+                          onClick={onCheckClick(row)}
+                          onChange={() => undefined}
+                          aria-label={`Selecionar ${row.code}`}
+                          title={selectable ? 'Shift+clique seleciona um intervalo' : 'Já está num produto do catálogo'}
+                        />
+                      </td>
                       <td className="col-mono col-code">{row.code}</td>
                       <td className="col-title">{row.description}</td>
                       <td>{row.brand}</td>
@@ -200,7 +243,7 @@ export function AdminPendingPage() {
                       </td>
                       <td className="col-actions">
                         {row.status === 'missing' ? (
-                          <button type="button" className="act act-pri" onClick={() => setCreating(row)}>
+                          <button type="button" className="act act-pri" onClick={() => setCreating({ source: 'row', rows: [row] })}>
                             + Cadastrar no catálogo
                           </button>
                         ) : (
@@ -232,15 +275,29 @@ export function AdminPendingPage() {
         )}
       </div>
 
+      {selectedRows.length > 0 && (
+        <PendingSelectionBar
+          rows={selectedRows}
+          hiddenCount={selection.hiddenCount}
+          onCreate={() => setCreating({ source: 'selection', rows: selectedRows })}
+          onClear={selection.clear}
+        />
+      )}
+
       {creating && (
         <ItemForm
           mode="create"
-          prefill={prefillFrom(creating)}
+          prefill={buildPrefill(creating.rows)}
           categories={categories.categories}
           onCancel={() => setCreating(null)}
           onSaved={(result) => {
-            setCreating(null);
             const published = result.item.is_active && result.item.category.is_active;
+            const savedCodes = result.item.codes.map((code) => code.code);
+            // Os códigos cadastrados saem da seleção e da lista na hora.
+            if (creating.source === 'selection') selection.clear();
+            else selection.remove(savedCodes);
+            markCataloged(savedCodes, published);
+            setCreating(null);
             show(
               result.warnings.length > 0 ? 'warn' : 'ok',
               [
@@ -251,7 +308,6 @@ export function AdminPendingPage() {
                 .filter(Boolean)
                 .join(' '),
             );
-            reload();
           }}
         />
       )}

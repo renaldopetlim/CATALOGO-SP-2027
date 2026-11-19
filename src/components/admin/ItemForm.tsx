@@ -2,7 +2,15 @@ import { useCallback, useId, useState, type FormEvent } from 'react';
 import { isServiceError } from '../../lib/errors';
 import { isHttpUrl, parseTagsInput } from '../../lib/format';
 import { saveCatalogItem, type SaveItemResult } from '../../services/adminCatalogService';
-import { BADGE_LABELS, BADGES, isCatalogBadge, type CatalogBadge, type Category, type CatalogItemWithCategory } from '../../types/catalog';
+import {
+  BADGE_LABELS,
+  BADGES,
+  isCatalogBadge,
+  type CatalogBadge,
+  type Category,
+  type CatalogItemWithCategory,
+  type ItemFormPrefill,
+} from '../../types/catalog';
 import { Drawer } from '../ui/Drawer';
 import { BrandSelect } from './BrandSelect';
 import { CodesEditor } from './CodesEditor';
@@ -12,12 +20,7 @@ import { SpecificationsEditor } from './SpecificationsEditor';
 
 export type ItemFormMode = 'create' | 'edit' | 'duplicate';
 
-/** Valores iniciais para um produto novo (ex.: vindos da base do sistema na conciliação). */
-export type ItemFormPrefill = {
-  title?: string;
-  brand?: string;
-  codes?: Array<{ code: string; description?: string; packaging?: string }>;
-};
+export type { ItemFormPrefill };
 
 type ItemFormProps = {
   mode: ItemFormMode;
@@ -204,7 +207,7 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
       : mode === 'duplicate' && item
         ? `Cópia de “${item.title}”, criada inativa. Informe códigos novos.`
         : usePrefill
-          ? 'Pré-preenchido com os dados do sistema. Revise o título e escolha a categoria.'
+          ? usePrefill.subtitle ?? 'Pré-preenchido com os dados do sistema. Revise o título e escolha a categoria.'
           : undefined;
 
   const submitLabel = saving
@@ -247,6 +250,7 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
               <label htmlFor="item-title">Título do produto *</label>
               <input id="item-title" value={form.title} maxLength={200} onChange={(e) => set('title', e.target.value)} className={fieldClass('title')} />
               {errors.title && <div className="msg">{errors.title}</div>}
+              {!errors.title && usePrefill?.titleHint && <p className="hint">{usePrefill.titleHint}</p>}
             </div>
             <div className="full">
               <BrandSelect
@@ -254,6 +258,8 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
                 onChange={setBrandId}
                 // Base do sistema (Pendentes) ou produto antigo ainda sem marca vinculada.
                 hintName={usePrefill?.brand ?? (item && !item.brand_id ? (item.brand ?? '') : '')}
+                // Registros com marcas diferentes: o admin escolhe a principal.
+                suggestions={usePrefill?.brandSuggestions}
                 disabled={saving}
               />
             </div>
