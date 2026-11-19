@@ -1,0 +1,858 @@
+/* ==========================================================================
+   PAINEL ADMINISTRATIVO — layout desktop em tela cheia
+   Carregado apenas com o painel (/admin). Usa os tokens de tokens.css.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Estrutura: barra lateral fixa + área principal fluida
+   -------------------------------------------------------------------------- */
+.admin-shell {
+  --sidebar-w: 248px;
+  --admin-gutter: 24px;
+  flex: 1;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.admin-small-screen {
+  display: none;
+}
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.admin-content {
+  flex: 1;
+  overflow: auto;
+}
+
+.admin-pad {
+  padding: 16px var(--admin-gutter);
+}
+
+p.admin-pad.state {
+  margin: 16px var(--admin-gutter);
+  padding: 24px 14px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Barra lateral
+   -------------------------------------------------------------------------- */
+.admin-sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--navy);
+  color: var(--white);
+  border-right: 4px solid var(--acc);
+  overflow-y: auto;
+}
+
+.sb-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sb-brand img {
+  height: 44px;
+  width: auto;
+  align-self: flex-start;
+}
+
+.sb-brand b {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.sb-brand span {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.sb-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 10px;
+}
+
+.sb-nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-btn);
+  border-left: 3px solid transparent;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.sb-nav a:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--white);
+}
+
+.sb-nav a[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.1);
+  border-left-color: var(--acc);
+  color: var(--white);
+}
+
+.sb-nav a:focus-visible,
+.sb-logout:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+.sb-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sb-live .live {
+  margin-left: 0;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.sb-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sb-avatar {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--acc);
+  color: var(--white);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.sb-email {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--white);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--r-btn);
+  font-size: 0.85rem;
+}
+
+.sb-logout:hover:not(:disabled) {
+  border-color: var(--acc);
+}
+
+/* --------------------------------------------------------------------------
+   3. Barra superior
+   -------------------------------------------------------------------------- */
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 14px var(--admin-gutter);
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.tb-title {
+  min-width: 180px;
+}
+
+.tb-title h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.tb-meta {
+  margin-top: 2px;
+  font-size: 0.8rem;
+  color: var(--mut);
+}
+
+.tb-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--acc);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tb-link:hover {
+  text-decoration: underline;
+}
+
+.tb-tools {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tb-search {
+  flex: 1 1 200px;
+  max-width: 400px;
+}
+
+.admin-topbar input,
+.admin-topbar select {
+  padding: 8px 10px;
+  font-size: 0.9rem;
+}
+
+.admin-topbar select {
+  width: auto;
+  min-width: 150px;
+  /* o select cresce até a opção mais longa: limita para não empurrar os filtros */
+  max-width: 220px;
+}
+
+.admin-topbar .search-clear {
+  bottom: 2px;
+}
+
+.tb-toggle {
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  font-size: 0.85rem;
+}
+
+.tb-toggle:hover {
+  border-color: var(--acc);
+}
+
+.tb-toggle[aria-pressed="true"] {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+}
+
+.tb-action .pri {
+  padding: 9px 16px;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   4. Tabela administrativa
+   -------------------------------------------------------------------------- */
+.admin-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--card);
+  font-size: 0.9rem;
+}
+
+.admin-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--card);
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-table th:first-child,
+.admin-table td:first-child {
+  padding-left: var(--admin-gutter);
+}
+
+.admin-table th:last-child,
+.admin-table td:last-child {
+  padding-right: var(--admin-gutter);
+}
+
+.admin-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+
+.admin-table tbody tr:hover td {
+  background: var(--bg);
+}
+
+.admin-table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--acc);
+}
+
+.admin-table tr.is-off td {
+  color: var(--mut);
+}
+
+.admin-table tr.is-off .thumb img {
+  opacity: 0.5;
+}
+
+.admin-table tr[aria-busy="true"] td {
+  opacity: 0.6;
+}
+
+.col-thumb {
+  width: 68px;
+}
+
+.thumb {
+  width: 48px;
+  height: 48px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tag);
+  overflow: hidden;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.thumb .no-image {
+  font-size: 0.5rem;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.col-title {
+  min-width: 200px;
+}
+
+.cell-link {
+  display: block;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-link:hover {
+  color: var(--acc);
+  text-decoration: underline;
+}
+
+.is-off .cell-link {
+  color: var(--mut);
+}
+
+.cell-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  color: var(--mut);
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-table th.col-num {
+  text-align: right;
+}
+
+.col-num.mut {
+  color: var(--mut);
+  font-size: 0.82rem;
+}
+
+.col-date {
+  width: 1%;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  color: var(--mut);
+  font-variant-numeric: tabular-nums;
+}
+
+.col-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  color: var(--mut);
+}
+
+.col-actions,
+.admin-table th.col-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.col-order {
+  width: 110px;
+}
+
+/* Na tabela, o selo da categoria usa caixa normal para caber em até 2 linhas */
+.admin-table .badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.col-cat {
+  width: 170px;
+  min-width: 130px;
+}
+
+.col-switch {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.badge.off {
+  background: var(--mut);
+}
+
+:root[data-theme="dark"] .badge.off {
+  color: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .badge.off {
+    color: var(--bg);
+  }
+}
+
+.row-actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.order-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.order-pos {
+  min-width: 20px;
+  font-size: 0.82rem;
+  color: var(--mut);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botões compactos de ação na linha */
+.act {
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tag);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.act:hover:not(:disabled) {
+  border-color: var(--acc);
+}
+
+.act.icon {
+  padding: 2px 8px;
+  font-size: 0.85rem;
+}
+
+.danger-text {
+  color: var(--err);
+}
+
+.btn-link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: var(--r-btn);
+  padding: 12px 18px;
+}
+
+.table-more {
+  display: flex;
+  justify-content: center;
+}
+
+/* --------------------------------------------------------------------------
+   5. Alternador (switch)
+   -------------------------------------------------------------------------- */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px;
+  background: transparent;
+  color: var(--ink);
+  border-radius: var(--r-tag);
+  font-weight: 600;
+}
+
+.switch-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.15s ease;
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--white);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.switch[aria-checked="true"] .switch-track {
+  background: var(--ok);
+}
+
+.switch.featured[aria-checked="true"] .switch-track {
+  background: var(--acc);
+}
+
+.switch[aria-checked="true"] .switch-thumb {
+  transform: translateX(14px);
+}
+
+.switch-text {
+  font-size: 0.8rem;
+  min-width: 38px;
+  text-align: left;
+}
+
+.date-time {
+  display: block;
+  font-size: 0.75rem;
+}
+
+.switch[aria-checked="false"] .switch-text {
+  color: var(--mut);
+}
+
+/* --------------------------------------------------------------------------
+   6. Gaveta lateral (drawer)
+   -------------------------------------------------------------------------- */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  background: var(--overlay);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: min(640px, 100vw);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-left: 4px solid var(--acc);
+  box-shadow: var(--shadow-modal);
+  animation: drawerIn 0.22s ease-out;
+}
+
+.drawer:focus {
+  outline: none;
+}
+
+.drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.drawer-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.drawer-head span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  color: var(--mut);
+}
+
+.drawer-close {
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--mut);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 4px;
+}
+
+.drawer-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--card);
+  border-top: 1px solid var(--line);
+}
+
+.drawer-foot .pri,
+.drawer-foot .sec {
+  padding: 10px 18px;
+}
+
+.drawer-error {
+  flex: 1 1 100%;
+  color: var(--err);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Imagem em coluna (preview em cima, controles embaixo) */
+.drawer .image-input {
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-top: 0;
+}
+
+.desc-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.desc-col textarea {
+  min-height: 150px;
+}
+
+@keyframes drawerIn {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer {
+    animation: none;
+  }
+
+  .switch-track,
+  .switch-thumb {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   7. Notebooks (< 1366px): mais espaço para a tabela
+   -------------------------------------------------------------------------- */
+@media (max-width: 1365px) {
+  .admin-shell {
+    --sidebar-w: 224px;
+    --admin-gutter: 20px;
+  }
+
+  /* O estado continua no rótulo acessível e na cor do alternador */
+  .switch-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   8. Telas pequenas (< 768px): aviso + layout empilhado sem quebrar
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .admin-shell {
+    --admin-gutter: 16px;
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .admin-small-screen {
+    display: block;
+    margin: 0;
+    padding: 8px 16px;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+    border-left: 4px solid var(--acc);
+    font-size: 0.8rem;
+    color: var(--mut);
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 4px solid var(--acc);
+    overflow: visible;
+  }
+
+  .sb-brand {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 0;
+  }
+
+  .sb-brand img {
+    height: 34px;
+  }
+
+  .sb-brand div {
+    display: none;
+  }
+
+  .sb-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 6px 8px;
+  }
+
+  .sb-nav a {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+  }
+
+  .sb-nav a[aria-current="page"] {
+    border-bottom-color: var(--acc);
+  }
+
+  .sb-foot {
+    margin-top: 0;
+    margin-left: auto;
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 16px;
+    border-top: 0;
+  }
+
+  .sb-user {
+    display: none;
+  }
+
+  .sb-logout {
+    width: auto;
+  }
+
+  .admin-main {
+    height: auto;
+  }
+
+  .admin-content {
+    overflow-x: auto;
+  }
+
+  .tb-tools {
+    flex: 1 1 100%;
+    order: 3;
+    justify-content: flex-start;
+  }
+
+  .tb-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .admin-topbar select {
+    flex: 1 1 140px;
+  }
+
+  .tb-title {
+    flex: 1;
+  }
+
+  .drawer .g {
+    grid-template-columns: 1fr;
+  }
+}

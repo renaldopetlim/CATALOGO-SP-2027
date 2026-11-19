@@ -11,6 +11,8 @@ type SearchBarProps = {
   label?: string;
   placeholder?: string;
   submitLabel?: string;
+  /** Mantém o rótulo só para leitores de tela (barras compactas). */
+  hideLabel?: boolean;
 };
 
 /** Campo de busca com debounce; sincroniza com a URL (voltar/avançar). */
@@ -21,6 +23,7 @@ export function SearchBar({
   label = 'Buscar no catálogo',
   placeholder = 'Nome, SKU, descrição ou tag',
   submitLabel,
+  hideLabel = false,
 }: SearchBarProps) {
   const inputId = useId();
   const [text, setText] = useState(value);
@@ -52,7 +55,9 @@ export function SearchBar({
         onSearch(text);
       }}
     >
-      <label htmlFor={inputId}>{label}</label>
+      <label htmlFor={inputId} className={hideLabel ? 'sr-only' : undefined}>
+        {label}
+      </label>
       <input
         id={inputId}
         type="search"

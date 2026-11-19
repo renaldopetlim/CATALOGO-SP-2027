@@ -1,19 +1,22 @@
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { isServiceError } from '../../lib/errors';
 import { isHttpUrl, maskPriceInput, parsePriceInput, parseTagsInput, priceToInput } from '../../lib/format';
 import { saveCatalogItem, type SaveItemResult } from '../../services/adminCatalogService';
 import type { Category, CatalogItemWithCategory } from '../../types/catalog';
-import { Modal } from '../ui/Modal';
+import { Drawer } from '../ui/Drawer';
 import { ImageInput, type ImageValue } from './ImageInput';
 
+export type ItemFormMode = 'create' | 'edit' | 'duplicate';
+
 type ItemFormProps = {
-  /** Ausente = novo item. */
+  mode: ItemFormMode;
+  /** Item a editar ou a duplicar (ausente ao criar). */
   item?: CatalogItemWithCategory | null;
   /** Todas as categorias (inclusive inativas). */
   categories: Category[];
   /** Categoria pré-selecionada para novos itens. */
   defaultCategoryId?: string | null;
-  onSaved: (result: SaveItemResult, mode: 'created' | 'updated') => void;
+  onSaved: (result: SaveItemResult, mode: ItemFormMode) => void;
   onCancel: () => void;
 };
 
@@ -31,17 +34,20 @@ type FormState = {
 
 type FieldErrors = Partial<Record<keyof FormState | 'image', string>>;
 
-function initialState(item: CatalogItemWithCategory | null | undefined, defaultCategoryId: string | null): FormState {
+function initialState(mode: ItemFormMode, item: CatalogItemWithCategory | null | undefined, defaultCategoryId: string | null): FormState {
+  const duplicate = mode === 'duplicate';
   return {
-    title: item?.title ?? '',
-    sku: item?.sku ?? '',
+    title: item ? (duplicate ? `${item.title} (cópia)` : item.title) : '',
+    // SKU é único: a cópia começa sem SKU.
+    sku: item && !duplicate ? (item.sku ?? '') : '',
     category_id: item?.category_id ?? defaultCategoryId ?? '',
     price: priceToInput(item?.price ?? null),
     short_description: item?.short_description ?? '',
     detailed_description: item?.detailed_description ?? '',
     tags: item?.tags.join(', ') ?? '',
-    is_featured: item?.is_featured ?? false,
-    is_active: item?.is_active ?? true,
+    // A cópia nasce inativa e sem destaque, para revisão antes de aparecer na vitrine.
+    is_featured: duplicate ? false : (item?.is_featured ?? false),
+    is_active: duplicate ? false : (item?.is_active ?? true),
   };
 }
 
@@ -56,10 +62,16 @@ function validate(form: FormState, image: ImageValue): FieldErrors {
   return errors;
 }
 
-/** Formulário de criação/edição de item (modal largo). */
-export function ItemForm({ item, categories, defaultCategoryId = null, onSaved, onCancel }: ItemFormProps) {
-  const isEdit = Boolean(item);
-  const [form, setForm] = useState<FormState>(() => initialState(item, defaultCategoryId));
+const TITLES: Record<ItemFormMode, string> = {
+  create: 'Novo item',
+  edit: 'Editar item',
+  duplicate: 'Duplicar item',
+};
+
+/** Formulário de item em gaveta lateral (criar, editar ou duplicar). */
+export function ItemForm({ mode, item, categories, defaultCategoryId = null, onSaved, onCancel }: ItemFormProps) {
+  const formId = useId();
+  const [form, setForm] = useState<FormState>(() => initialState(mode, item, defaultCategoryId));
   const [image, setImage] = useState<ImageValue>({ mode: 'url', url: item?.image_url ?? null });
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -80,7 +92,7 @@ export function ItemForm({ item, categories, defaultCategoryId = null, onSaved, 
     setSaving(true);
     try {
       const result = await saveCatalogItem({
-        id: item?.id,
+        id: mode === 'edit' ? item?.id : undefined,
         input: {
           title: form.title,
           sku: form.sku,
@@ -94,9 +106,11 @@ export function ItemForm({ item, categories, defaultCategoryId = null, onSaved, 
           image_url: image.mode === 'url' ? (image.url?.trim() ?? null) : null,
         },
         newImageFile: image.mode === 'file' ? image.file : null,
-        previousImageUrl: item?.image_url ?? null,
+        // Só na edição a imagem anterior pertence a este item e pode ser removida.
+        previousImageUrl: mode === 'edit' ? (item?.image_url ?? null) : null,
+        copyImageFromUrl: mode === 'duplicate' ? (item?.image_url ?? null) : null,
       });
-      onSaved(result, isEdit ? 'updated' : 'created');
+      onSaved(result, mode);
     } catch (err) {
       const message = isServiceError(err) ? err.message : 'Não foi possível salvar. Tente novamente.';
       if (isServiceError(err) && err.kind === 'conflict' && /SKU/i.test(message)) {
@@ -108,20 +122,56 @@ export function ItemForm({ item, categories, defaultCategoryId = null, onSaved, 
   };
 
   const fieldClass = (field: keyof FieldErrors) => (errors[field] ? 'bad' : undefined);
+  const subtitle =
+    mode === 'edit' && item
+      ? [item.sku ? `SKU ${item.sku}` : null, item.category.name].filter(Boolean).join(' · ')
+      : mode === 'duplicate' && item
+        ? `Cópia de “${item.title}”, criada inativa para revisão`
+        : undefined;
+
+  const submitLabel = saving
+    ? image.mode === 'file'
+      ? 'Enviando imagem e salvando…'
+      : 'Salvando…'
+    : mode === 'edit'
+      ? 'Salvar alterações'
+      : mode === 'duplicate'
+        ? 'Criar cópia'
+        : 'Criar item';
 
   return (
-    <Modal title={isEdit ? 'Editar item' : 'Novo item'} onClose={saving ? () => undefined : onCancel} size="wide" showTitle>
-      <form onSubmit={(event) => void handleSubmit(event)} noValidate>
+    <Drawer
+      title={TITLES[mode]}
+      subtitle={subtitle}
+      onClose={onCancel}
+      locked={saving}
+      footer={
+        <>
+          {submitError && (
+            <div className="drawer-error" role="alert">
+              {submitError}
+            </div>
+          )}
+          <button type="button" className="sec" onClick={onCancel} disabled={saving}>
+            Cancelar
+          </button>
+          <button type="submit" form={formId} className="pri" disabled={saving}>
+            {submitLabel}
+          </button>
+        </>
+      }
+    >
+      <form id={formId} onSubmit={(event) => void handleSubmit(event)} noValidate>
         <fieldset disabled={saving}>
-          <legend>Dados do item</legend>
+          <legend>Identificação</legend>
           <div className="g">
-            <div className="full">
+            <div>
               <label htmlFor="item-title">Título *</label>
               <input id="item-title" value={form.title} maxLength={200} onChange={(e) => set('title', e.target.value)} className={fieldClass('title')} />
               {errors.title && <div className="msg">{errors.title}</div>}
             </div>
             <div>
-              <label htmlFor="item-sku">SKU</label>
+              <label htmlFor="item-sku">SKU / Código</label>
               <input id="item-sku" value={form.sku} onChange={(e) => set('sku', e.target.value.toUpperCase())} className={fieldClass('sku')} />
               {errors.sku && <div className="msg">{errors.sku}</div>}
             </div>
@@ -148,32 +198,38 @@ export function ItemForm({ item, categories, defaultCategoryId = null, onSaved, 
                 onChange={(e) => set('price', maskPriceInput(e.target.value))}
               />
             </div>
-            <div>
+            <div className="full">
               <label htmlFor="item-tags">Tags (separadas por vírgula)</label>
               <input id="item-tags" placeholder="piso, área externa" value={form.tags} onChange={(e) => set('tags', e.target.value)} />
-            </div>
-            <div className="full">
-              <label htmlFor="item-short">Descrição curta</label>
-              <input id="item-short" value={form.short_description} onChange={(e) => set('short_description', e.target.value)} />
-            </div>
-            <div className="full">
-              <label htmlFor="item-detail">Descrição detalhada</label>
-              <textarea id="item-detail" rows={5} value={form.detailed_description} onChange={(e) => set('detailed_description', e.target.value)} />
             </div>
           </div>
         </fieldset>
 
         <fieldset disabled={saving}>
-          <legend>Imagem</legend>
-          <ImageInput
-            value={image}
-            onChange={(next) => {
-              setImage(next);
-              setErrors((prev) => ({ ...prev, image: undefined }));
-            }}
-            disabled={saving}
-            error={errors.image ?? null}
-          />
+          <legend>Imagem e descrição</legend>
+          <div className="g">
+            <div>
+              <ImageInput
+                value={image}
+                onChange={(next) => {
+                  setImage(next);
+                  setErrors((prev) => ({ ...prev, image: undefined }));
+                }}
+                disabled={saving}
+                error={errors.image ?? null}
+              />
+            </div>
+            <div className="desc-col">
+              <div>
+                <label htmlFor="item-short">Descrição curta</label>
+                <input id="item-short" value={form.short_description} onChange={(e) => set('short_description', e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="item-detail">Descrição detalhada</label>
+                <textarea id="item-detail" rows={8} value={form.detailed_description} onChange={(e) => set('detailed_description', e.target.value)} />
+              </div>
+            </div>
+          </div>
         </fieldset>
 
         <fieldset disabled={saving}>
@@ -189,21 +245,7 @@ export function ItemForm({ item, categories, defaultCategoryId = null, onSaved, 
             </label>
           </div>
         </fieldset>
-
-        <div className="bar">
-          <button type="submit" className="pri" disabled={saving}>
-            {saving ? (image.mode === 'file' ? 'Enviando imagem e salvando…' : 'Salvando…') : isEdit ? 'Salvar alterações' : 'Criar item'}
-          </button>
-          <button type="button" className="sec" onClick={onCancel} disabled={saving}>
-            Cancelar
-          </button>
-        </div>
-        {submitError && (
-          <div id="st" className="is-err" role="alert">
-            {submitError}
-          </div>
-        )}
       </form>
-    </Modal>
+    </Drawer>
   );
 }

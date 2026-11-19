@@ -90,6 +90,29 @@ export async function uploadCatalogImage(file: File): Promise<UploadedImage> {
 }
 
 /**
+ * Copia uma imagem do bucket para um novo arquivo (usado ao duplicar um item:
+ * cada item precisa do próprio arquivo, senão excluir um apagaria a foto do outro).
+ * URLs externas não são copiadas: retorna a própria URL.
+ */
+export async function copyCatalogImage(url: string): Promise<UploadedImage> {
+  const fromPath = getStoragePathFromUrl(url);
+  if (!fromPath) return { path: '', publicUrl: url };
+
+  const extension = fromPath.split('.').pop() ?? 'img';
+  const toPath = `items/${new Date().getFullYear()}/${crypto.randomUUID()}.${extension}`;
+
+  try {
+    const { error } = await supabase.storage.from(CATALOG_IMAGES_BUCKET).copy(fromPath, toPath);
+    if (error) throw error;
+    // `copy()` devolve o Key com o nome do bucket na frente ("catalog-images/items/…");
+    // a URL pública precisa só do caminho dentro do bucket, que é o `toPath`.
+    return { path: toPath, publicUrl: getPublicImageUrl(toPath) };
+  } catch (error) {
+    throw toServiceError(error, 'copiar a imagem');
+  }
+}
+
+/**
  * Remove uma imagem do bucket. Aceita o caminho interno ou a URL pública.
  * URLs externas são ignoradas (retorna `false`, nada é removido).
  * Lança `ServiceError('not_found')` se o arquivo não existir ou não puder ser removido.

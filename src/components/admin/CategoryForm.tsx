@@ -1,9 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useId, useState, type FormEvent } from 'react';
 import { isServiceError } from '../../lib/errors';
 import { SLUG_PATTERN, slugify } from '../../lib/format';
 import { createCategory, updateCategory } from '../../services/categoryService';
 import type { Category } from '../../types/catalog';
-import { Modal } from '../ui/Modal';
+import { Drawer } from '../ui/Drawer';
 
 type CategoryFormProps = {
   /** Ausente = nova categoria. */
@@ -14,8 +14,9 @@ type CategoryFormProps = {
 
 type FieldErrors = Partial<Record<'name' | 'slug', string>>;
 
-/** Formulário de criação/edição de categoria. O slug acompanha o nome até ser editado manualmente. */
+/** Formulário de categoria em gaveta lateral. O slug acompanha o nome até ser editado manualmente. */
 export function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps) {
+  const formId = useId();
   const isEdit = Boolean(category);
   const [name, setName] = useState(category?.name ?? '');
   const [slug, setSlug] = useState(category?.slug ?? '');
@@ -51,8 +52,28 @@ export function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps)
   };
 
   return (
-    <Modal title={isEdit ? 'Editar categoria' : 'Nova categoria'} onClose={saving ? () => undefined : onCancel} size="wide" showTitle>
-      <form onSubmit={(event) => void handleSubmit(event)} noValidate>
+    <Drawer
+      title={isEdit ? 'Editar categoria' : 'Nova categoria'}
+      subtitle={category ? `/${category.slug}` : undefined}
+      onClose={onCancel}
+      locked={saving}
+      footer={
+        <>
+          {submitError && (
+            <div className="drawer-error" role="alert">
+              {submitError}
+            </div>
+          )}
+          <button type="button" className="sec" onClick={onCancel} disabled={saving}>
+            Cancelar
+          </button>
+          <button type="submit" form={formId} className="pri" disabled={saving}>
+            {saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Criar categoria'}
+          </button>
+        </>
+      }
+    >
+      <form id={formId} onSubmit={(event) => void handleSubmit(event)} noValidate>
         <fieldset disabled={saving}>
           <legend>Dados da categoria</legend>
           <div className="g">
@@ -85,12 +106,12 @@ export function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps)
               {errors.slug ? (
                 <div className="msg">{errors.slug}</div>
               ) : (
-                <p className="hint">/catalogo?categoria={effectiveSlug || '…'}</p>
+                <p className="hint">#/catalogo?categoria={effectiveSlug || '…'}</p>
               )}
             </div>
             <div className="full">
               <label htmlFor="cat-desc">Descrição</label>
-              <textarea id="cat-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+              <textarea id="cat-desc" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             <div className="full">
               <label className="check">
@@ -104,21 +125,7 @@ export function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps)
         {isEdit && category && slug !== category.slug && (
           <p className="hint warn">Alterar o slug muda o endereço da categoria; links antigos deixarão de funcionar.</p>
         )}
-
-        <div className="bar">
-          <button type="submit" className="pri" disabled={saving}>
-            {saving ? 'Salvando…' : isEdit ? 'Salvar alterações' : 'Criar categoria'}
-          </button>
-          <button type="button" className="sec" onClick={onCancel} disabled={saving}>
-            Cancelar
-          </button>
-        </div>
-        {submitError && (
-          <div id="st" className="is-err" role="alert">
-            {submitError}
-          </div>
-        )}
       </form>
-    </Modal>
+    </Drawer>
   );
 }

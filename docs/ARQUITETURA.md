@@ -36,21 +36,21 @@ catalogo-sp-2027/
 │   │   ├── useCatalogParams.ts  # estado da vitrine na URL
 │   │   ├── useAuth.ts + authContext.ts
 │   │   ├── useCatalogLive.ts    # recarrega ao receber aviso do Realtime
-│   │   └── useDebounce, useDocumentTitle, useRefetchOnFocus, useToast
+│   │   └── useDebounce, useDocumentTitle, useRefetchOnFocus, useToast, useDialogBehavior
 │   ├── components/
 │   │   ├── auth/AuthProvider.tsx
 │   │   ├── ProtectedRoute.tsx
-│   │   ├── layout/              # SiteHeader, SiteFooter, PublicLayout, AdminLayout
+│   │   ├── layout/              # SiteHeader, SiteFooter, PublicLayout, AdminLayout (barra lateral + área principal)
 │   │   ├── catalog/             # ItemCard, ItemGrid, ItemImage, CategoryFilter, SearchBar, ItemDetailModal
-│   │   ├── admin/               # ItemForm, CategoryForm, ImageInput
-│   │   └── ui/                  # Modal, ConfirmDialog, Toast, StateMessage, StartupError
+│   │   ├── admin/               # AdminTopbar, ItemForm, CategoryForm (gavetas), ImageInput, DateCell
+│   │   └── ui/                  # Modal, Drawer, Switch, ConfirmDialog, Toast, StateMessage, StartupError
 │   ├── pages/
 │   │   ├── HomePage.tsx         # /
 │   │   ├── CatalogPage.tsx      # #/catalogo?categoria=&q=&item=
 │   │   ├── LoginPage.tsx        # /login
 │   │   ├── NotFoundPage.tsx
 │   │   └── admin/               # AdminItemsPage (/admin), AdminCategoriesPage (/admin/categorias)
-│   ├── styles/                  # tokens.css (Design System), global.css
+│   ├── styles/                  # tokens.css (Design System), global.css, admin.css (só no /admin)
 │   ├── App.tsx                  # rotas com HashRouter (admin carregado sob demanda)
 │   ├── main.tsx
 │   └── vite-env.d.ts
