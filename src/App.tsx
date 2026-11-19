@@ -14,6 +14,8 @@ const AdminItemsPage = lazy(() => import('./pages/admin/AdminItemsPage').then((m
 const AdminCategoriesPage = lazy(() =>
   import('./pages/admin/AdminCategoriesPage').then((m) => ({ default: m.AdminCategoriesPage })),
 );
+const AdminImportPage = lazy(() => import('./pages/admin/AdminImportPage').then((m) => ({ default: m.AdminImportPage })));
+const AdminPendingPage = lazy(() => import('./pages/admin/AdminPendingPage').then((m) => ({ default: m.AdminPendingPage })));
 
 function AdminFallback() {
   return (
@@ -54,6 +56,8 @@ export default function App() {
           >
             <Route index element={<AdminItemsPage />} />
             <Route path="categorias" element={<AdminCategoriesPage />} />
+            <Route path="pendentes" element={<AdminPendingPage />} />
+            <Route path="importar" element={<AdminImportPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

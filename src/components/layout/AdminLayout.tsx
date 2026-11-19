@@ -17,6 +17,8 @@ function NavIcon({ path }: { path: string }) {
 const ICONS = {
   items: 'M3 5h18M3 12h18M3 19h18M7 5v14',
   categories: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  pending: 'M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+  upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
   store: 'M14 3h7v7M10 14 21 3M21 14v7H3V3h7',
   logout: 'M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3',
 };
@@ -60,6 +62,16 @@ export function AdminLayout() {
             <NavIcon path={ICONS.categories} />
             Categorias
           </NavLink>
+          <span className="sb-section">Sistema interno</span>
+          <NavLink to="/admin/pendentes">
+            <NavIcon path={ICONS.pending} />
+            Pendentes no catálogo
+          </NavLink>
+          <NavLink to="/admin/importar">
+            <NavIcon path={ICONS.upload} />
+            Importar planilha
+          </NavLink>
+          <span className="sb-section">Vitrine</span>
           <a href={SITE_ROOT_URL} target="_blank" rel="noopener">
             <NavIcon path={ICONS.store} />
             Ver vitrine pública
