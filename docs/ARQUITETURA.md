@@ -10,7 +10,7 @@
 ```text
 catalogo-sp-2027/
 ├── docs/                        # ARQUITETURA, DESIGN-SYSTEM, CHECKLIST-TESTES
-├── supabase/migrations/         # SQL: tabelas, índices, triggers, RLS, bucket
+├── supabase/migrations/         # SQL: tabelas, RLS, bucket + sinal do Realtime
 ├── public/
 │   ├── assets/                  # logo.png, logo-mini.ico
 │   └── _redirects               # SPA fallback (Netlify)
@@ -20,6 +20,7 @@ catalogo-sp-2027/
 │   │   └── catalog.ts           # Category, CatalogItem, inputs, filtros
 │   ├── lib/
 │   │   ├── supabase.ts          # cliente tipado + validação das variáveis VITE_*
+│   │   ├── catalogSync.ts       # canal único do Realtime (avisos de mudança)
 │   │   ├── errors.ts            # ServiceError (mensagens em português)
 │   │   └── format.ts            # moeda, slug, busca sem acento, máscaras
 │   ├── services/
@@ -34,6 +35,7 @@ catalogo-sp-2027/
 │   │   ├── useCategories.ts / useAdminCategories.ts / useItemDetail.ts
 │   │   ├── useCatalogParams.ts  # estado da vitrine na URL
 │   │   ├── useAuth.ts + authContext.ts
+│   │   ├── useCatalogLive.ts    # recarrega ao receber aviso do Realtime
 │   │   └── useDebounce, useDocumentTitle, useRefetchOnFocus, useToast
 │   ├── components/
 │   │   ├── auth/AuthProvider.tsx
@@ -107,6 +109,11 @@ Isso evita que alguém crie uma conta pelo Auth e ganhe acesso de escrita. Mesmo
                                                                            RLS filtra: só ativos
                                        Storage (público) ◀────────────── 6. <img src="URL pública">
 ```
+
+**Tempo real:** cada alteração em `categories` ou `catalog_items` dispara um trigger que incrementa
+`catalog_sync.version`. A vitrine assina essa tabela pelo Supabase Realtime (um único canal, em
+`src/lib/catalogSync.ts`) e recarrega as consultas quando recebe o aviso. Avisos em sequência viram uma só
+recarga. O Realtime só transporta o número da versão, nunca dados do catálogo.
 
 A vitrine nunca recebe registros inativos: o filtro acontece no banco, pela RLS, e não no
 front. Depois de cada operação, o painel recarrega os dados. A vitrine busca dados novos a

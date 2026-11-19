@@ -6,6 +6,7 @@ import { SearchBar } from '../components/catalog/SearchBar';
 import { EmptyState, ErrorState, SkeletonGrid } from '../components/ui/StateMessage';
 import { PARAM, useCatalogParams } from '../hooks/useCatalogParams';
 import { useCatalogItems } from '../hooks/useCatalogItems';
+import { useCatalogSyncStatus } from '../hooks/useCatalogLive';
 import { useCategories } from '../hooks/useCategories';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
@@ -33,6 +34,8 @@ export function CatalogPage() {
     `${PATH}${buildSearch({ [PARAM.category]: slug, [PARAM.item]: null })}`;
   const linkForItem = (id: string) => `${PATH}${buildSearch({ [PARAM.item]: id })}`;
   const clearSearchLink = `${PATH}${buildSearch({ [PARAM.search]: null, [PARAM.item]: null })}`;
+
+  const syncStatus = useCatalogSyncStatus();
 
   const waitingCategory = Boolean(categorySlug) && categories.status === 'loading';
 
@@ -63,6 +66,11 @@ export function CatalogPage() {
           <p className="result-info">
             {items.total === 1 ? '1 item encontrado' : `${items.total.toLocaleString('pt-BR')} itens encontrados`}
             {search && <> para “{search}”</>}
+            {syncStatus === 'live' && (
+              <span className="live" title="A lista se atualiza sozinha quando o catálogo muda">
+                ao vivo
+              </span>
+            )}
           </p>
         )}
       </div>

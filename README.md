@@ -22,9 +22,10 @@ para gerenciar categorias, itens e imagens sem editar código.
 
 ## 1. Configurar o Supabase
 
-1. **Banco:** em *SQL Editor → New query*, cole todo o conteúdo de
-   `supabase/migrations/20261119000000_init_catalog.sql` e clique em **Run**.
-   O script cria tabelas, índices, triggers, RLS e o bucket `catalog-images`. Pode ser executado de novo sem erro.
+1. **Banco:** em *SQL Editor → New query*, execute **nesta ordem** os arquivos de `supabase/migrations/`
+   (cole o conteúdo e clique em **Run**). Ambos podem ser executados de novo sem erro.
+   - `20261119000000_init_catalog.sql`: tabelas, índices, triggers, RLS e bucket `catalog-images`.
+   - `20261119020000_realtime_catalog_sync.sql`: atualização da vitrine em tempo real.
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
@@ -108,6 +109,22 @@ cd catalogo-sp-2027
 npm install @supabase/supabase-js react-router-dom
 ```
 
+## Atualização em tempo real (Supabase Realtime)
+
+A vitrine se atualiza sozinha quando o admin altera o catálogo: preço, imagem, item novo, item inativado,
+categoria renomeada ou reordenada. Não é preciso recarregar a página. Quando a conexão está ativa, o catálogo
+mostra o indicador **● ao vivo** ao lado do total de itens.
+
+- **Como funciona:** cada alteração em `categories` ou `catalog_items` incrementa a linha única de
+  `catalog_sync`. A vitrine escuta só essa tabela e, ao receber o aviso, recarrega pelas consultas normais,
+  que já respeitam a RLS. Nenhum dado do catálogo trafega pelo Realtime.
+- **Por que não publicar as tabelas direto:** o Realtime filtra eventos pela RLS. Quando um item é inativado,
+  ele deixa de ser visível ao visitante, e o aviso não chegaria. A vitrine continuaria exibindo o item.
+- **Se o Realtime cair:** o cliente reconecta sozinho e recarrega ao voltar. A recarga ao focar a aba
+  continua como reserva.
+- **Conferir no painel do Supabase:** em *Database → Publications → supabase_realtime*, apenas
+  `catalog_sync` deve estar marcada.
+
 ## 3. Publicar (deploy)
 
 Qualquer hospedagem de site estático serve (Vercel, Netlify, Cloudflare Pages…):
@@ -128,6 +145,7 @@ Qualquer hospedagem de site estático serve (Vercel, Netlify, Cloudflare Pages�
 | "Você não tem permissão…" ao salvar | Mesmo caso acima, ou sessão expirada: saia e entre de novo |
 | Upload recusado | Arquivo acima de 5 MB ou fora de JPEG/PNG/WebP/AVIF |
 | 404 ao recarregar `/catalogo` em produção | Falta o "SPA fallback" na hospedagem |
+| Indicador "ao vivo" não aparece | Migração de Realtime não executada, ou WebSocket bloqueado pela rede |
 
 ---
 

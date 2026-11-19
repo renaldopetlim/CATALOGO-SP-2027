@@ -18,7 +18,7 @@ type Loaded<T> = { key: string; attempt: number; data: T | null; error: ServiceE
  * Carrega um recurso assíncrono identificado por `key`.
  * - Troca de `key` → mostra "loading" e busca de novo.
  * - `reload()` com dados já exibidos → atualiza em segundo plano, sem piscar;
- *   se essa atualização falhar, mantém os dados anteriores.
+ *   se essa atualização falhar por rede, mantém os dados anteriores.
  * - Respostas de chaves antigas são descartadas.
  */
 export function useResource<T>(
@@ -42,8 +42,13 @@ export function useResource<T>(
       .catch((err: unknown) => {
         if (cancelled) return;
         const error = asServiceError(err, errorContext);
+        // Falha passageira (rede) numa recarga: mantém os dados atuais.
+        // "Não encontrado"/"sem permissão" substituem (ex.: item inativado).
+        const transient = error.kind === 'network' || error.kind === 'unknown';
         setLoaded((prev) =>
-          prev && prev.key === key && !prev.error ? { ...prev, attempt } : { key, attempt, data: null, error },
+          transient && prev && prev.key === key && !prev.error
+            ? { ...prev, attempt }
+            : { key, attempt, data: null, error },
         );
       });
 

@@ -3,6 +3,7 @@ import { listAdminItems, listPublicItems } from '../services/catalogService';
 import type { ServiceError } from '../lib/errors';
 import type { CatalogFilters, CatalogItemWithCategory, CatalogScope } from '../types/catalog';
 import { asServiceError, type AsyncStatus } from './asyncState';
+import { useCatalogLive } from './useCatalogLive';
 import { useRefetchOnFocus } from './useRefetchOnFocus';
 
 export const PAGE_SIZE = 24;
@@ -30,6 +31,8 @@ type Options = {
   scope?: CatalogScope;
   /** Recarrega quando a aba volta a ficar visível. Padrão: `true`. */
   refetchOnFocus?: boolean;
+  /** Recarrega quando o catálogo muda no banco (Realtime). Padrão: só na vitrine. */
+  live?: boolean;
 };
 
 type ListFilters = Pick<CatalogFilters, 'categoryId' | 'search' | 'featured' | 'sort' | 'status'>;
@@ -52,7 +55,7 @@ type Loaded = {
  */
 export function useCatalogItems(
   filters: ListFilters,
-  { enabled = true, pageSize = PAGE_SIZE, scope = 'public', refetchOnFocus = true }: Options = {},
+  { enabled = true, pageSize = PAGE_SIZE, scope = 'public', refetchOnFocus = true, live = scope === 'public' }: Options = {},
 ): UseCatalogItemsResult {
   const categoryId = filters.categoryId ?? null;
   const search = filters.search ?? '';
@@ -130,6 +133,7 @@ export function useCatalogItems(
 
   const reload = useCallback(() => setAttempt((n) => n + 1), []);
   useRefetchOnFocus(reload, enabled && refetchOnFocus);
+  useCatalogLive(reload, enabled && live);
 
   return {
     items,

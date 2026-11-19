@@ -37,6 +37,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      catalog_sync: {
+        Row: {
+          id: number;
+          version: number;
+          changed_at: string;
+          last_table: string | null;
+        };
+        Insert: {
+          id?: number;
+          version?: number;
+          changed_at?: string;
+          last_table?: string | null;
+        };
+        Update: {
+          id?: number;
+          version?: number;
+          changed_at?: string;
+          last_table?: string | null;
+        };
+        Relationships: [];
+      };
       categories: {
         Row: {
           id: string;
