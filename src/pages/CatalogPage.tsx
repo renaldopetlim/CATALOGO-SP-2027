@@ -35,6 +35,13 @@ export function CatalogPage() {
   const linkForItem = (id: string) => `${PATH}${buildSearch({ [PARAM.item]: id })}`;
   const clearSearchLink = `${PATH}${buildSearch({ [PARAM.search]: null, [PARAM.item]: null })}`;
 
+  // Mensagem da lista vazia conforme o contexto (busca, categoria ou catálogo inteiro).
+  const emptyState = search
+    ? { title: 'Nenhum item encontrado', text: 'Tente outras palavras ou verifique a grafia.' }
+    : selectedCategory
+      ? { title: 'Nenhum item nesta categoria', text: 'Esta categoria ainda não possui itens.' }
+      : { title: 'Nenhum item disponível', text: 'O catálogo ainda não possui itens. Volte em breve.' };
+
   const waitingCategory = Boolean(categorySlug) && categories.status === 'loading';
 
   return (
@@ -91,7 +98,7 @@ export function CatalogPage() {
 
         {!categoryNotFound && items.status === 'success' && items.items.length === 0 && (
           <EmptyState
-            title="Nenhum item encontrado"
+            title={emptyState.title}
             action={
               <>
                 {search && (
@@ -107,7 +114,7 @@ export function CatalogPage() {
               </>
             }
           >
-            {search ? 'Tente outras palavras ou verifique a grafia.' : 'Esta categoria ainda não possui itens.'}
+            {emptyState.text}
           </EmptyState>
         )}
 
