@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b",
     "lint": "oxlint",
+    "check": "tsc -b && oxlint",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -24,5 +25,8 @@
     "oxlint": "^1.94.0",
     "typescript": "~7.0.2",
     "vite": "^8.3.8"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   }
 }
