@@ -4,7 +4,8 @@ Roteiro para validar o catálogo contra um projeto Supabase **real**, do zero at
 Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante). Marque cada item ao concluir.
 
 > Antes de começar: siga as seções 1 e 2 do [README](../README.md) (SQL executado, `.env.local` preenchido,
-> `npm run dev` rodando).
+> `npm run dev` rodando). As rotas usam `#`: localmente, `http://localhost:5173/#/admin`; publicado,
+> `https://renaldopetlim.github.io/CATALOGO-SP-2027/#/admin`.
 
 ---
 
@@ -34,7 +35,7 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
 
 - [ ] *Authentication → Sign In / Providers*: **Allow new users to sign up** desativado.
 - [ ] *Authentication → Users → Add user*: crie o usuário com **Auto Confirm User** marcado.
-- [ ] Ainda **sem** inserir o usuário em `admin_users`, abra `/admin` na janela A.
+- [ ] Ainda **sem** inserir o usuário em `admin_users`, abra `#/admin` na janela A.
   - **Esperado:** redireciona para `/login`.
 - [ ] Entre com uma senha errada.
   - **Esperado:** "E-mail ou senha incorretos."
@@ -42,7 +43,7 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
   - **Esperado:** tela "Acesso restrito", porque o usuário ainda não é admin.
 - [ ] Execute o `insert into public.admin_users …` do README e clique em "Sair e entrar com outra conta".
 - [ ] Entre de novo.
-  - **Esperado:** abre o painel em `/admin`.
+  - **Esperado:** abre o painel em `#/admin`.
 - [ ] Recarregue a página (F5).
   - **Esperado:** continua logado no painel.
 
@@ -105,7 +106,7 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
   - **Esperado:** a busca e a categoria continuam iguais.
 - [ ] Copie a URL com `&item=…` e cole numa nova aba.
   - **Esperado:** o modal abre direto.
-- [ ] Abra `/catalogo?categoria=nao-existe`.
+- [ ] Abra `#/catalogo?categoria=nao-existe`.
   - **Esperado:** "Categoria não encontrada".
 - [ ] Teste no celular, ou no navegador com a tela estreita, e em modo escuro.
   - **Esperado:** sem rolagem lateral e com as cores certas.
@@ -132,7 +133,7 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
 
 > Requer a migração `20261119020000_realtime_catalog_sync.sql`.
 
-- [ ] Na janela B, abra `/catalogo`.
+- [ ] Na janela B, abra `#/catalogo`.
   - **Esperado:** o indicador **● ao vivo** aparece ao lado do total de itens.
 - [ ] Na janela A, altere o preço de um item. **Não** mexa na janela B.
   - **Esperado:** em cerca de 1 segundo, o preço novo aparece na janela B.
@@ -214,7 +215,7 @@ abaixo simulam um visitante mal-intencionado:
 ## 8. Sessão
 
 - [ ] Clique em **SAIR**.
-  - **Esperado:** vai para `/login`, e abrir `/admin` leva de volta ao login.
+  - **Esperado:** vai para `#/login`, e abrir `#/admin` leva de volta ao login.
 - [ ] Com o servidor parado ou sem internet, use a vitrine.
   - **Esperado:** mensagem de erro com "Tentar novamente", sem tela branca.
 - [ ] Renomeie o `.env.local` e reinicie o `npm run dev`.

@@ -1,0 +1,89 @@
+# Deploy automático no GitHub Pages
+# Publica em: https://renaldopetlim.github.io/CATALOGO-SP-2027/
+#
+# Pré-requisitos (uma vez, no GitHub):
+#   1. Settings → Pages → Build and deployment → Source: "GitHub Actions"
+#   2. Settings → Secrets and variables → Actions → New repository secret:
+#        VITE_SUPABASE_URL       (ex.: https://abcdefgh.supabase.co)
+#        VITE_SUPABASE_ANON_KEY  (chave anon/publishable — NUNCA a secret/service_role)
+
+name: Deploy no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Permite rodar manualmente em Actions → "Deploy no GitHub Pages" → Run workflow
+  workflow_dispatch:
+
+# Permissões mínimas exigidas pelo actions/deploy-pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Um deploy por vez; não cancela um deploy já em andamento
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Conferir os secrets do Supabase
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          missing=0
+          if [ -z "$VITE_SUPABASE_URL" ]; then
+            echo "::error title=Secret ausente::Cadastre VITE_SUPABASE_URL em Settings → Secrets and variables → Actions."
+            missing=1
+          fi
+          if [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error title=Secret ausente::Cadastre VITE_SUPABASE_ANON_KEY em Settings → Secrets and variables → Actions."
+            missing=1
+          fi
+          exit $missing
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Checar tipos e lint
+        run: npm run check
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Enviar a pasta dist
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

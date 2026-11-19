@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -28,7 +28,12 @@ function AdminFallback() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      {/*
+        HashRouter: as rotas ficam após o # (…/CATALOGO-SP-2027/#/admin).
+        O GitHub Pages só recebe a parte antes do #, então recarregar (F5) ou
+        abrir um link direto nunca gera 404.
+      */}
+      <HashRouter>
         <Routes>
           <Route element={<PublicLayout />}>
             <Route index element={<HomePage />} />
@@ -52,7 +57,7 @@ export default function App() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   );
 }

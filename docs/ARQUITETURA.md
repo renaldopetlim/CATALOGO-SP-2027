@@ -12,14 +12,14 @@ catalogo-sp-2027/
 ├── docs/                        # ARQUITETURA, DESIGN-SYSTEM, CHECKLIST-TESTES
 ├── supabase/migrations/         # SQL: tabelas, RLS, bucket + sinal do Realtime
 ├── public/
-│   ├── assets/                  # logo.png, logo-mini.ico
-│   └── _redirects               # SPA fallback (Netlify)
+│   └── assets/                  # logo.png, logo-mini.ico
 ├── src/
 │   ├── types/
 │   │   ├── database.ts          # tipo Database (formato do supabase gen types)
 │   │   └── catalog.ts           # Category, CatalogItem, inputs, filtros
 │   ├── lib/
 │   │   ├── supabase.ts          # cliente tipado + validação das variáveis VITE_*
+│   │   ├── assets.ts            # URLs de arquivos públicos respeitando o base
 │   │   ├── catalogSync.ts       # canal único do Realtime (avisos de mudança)
 │   │   ├── errors.ts            # ServiceError (mensagens em português)
 │   │   └── format.ts            # moeda, slug, busca sem acento, máscaras
@@ -46,16 +46,17 @@ catalogo-sp-2027/
 │   │   └── ui/                  # Modal, ConfirmDialog, Toast, StateMessage, StartupError
 │   ├── pages/
 │   │   ├── HomePage.tsx         # /
-│   │   ├── CatalogPage.tsx      # /catalogo?categoria=&q=&item=
+│   │   ├── CatalogPage.tsx      # #/catalogo?categoria=&q=&item=
 │   │   ├── LoginPage.tsx        # /login
 │   │   ├── NotFoundPage.tsx
 │   │   └── admin/               # AdminItemsPage (/admin), AdminCategoriesPage (/admin/categorias)
 │   ├── styles/                  # tokens.css (Design System), global.css
-│   ├── App.tsx                  # rotas (admin carregado sob demanda)
+│   ├── App.tsx                  # rotas com HashRouter (admin carregado sob demanda)
 │   ├── main.tsx
 │   └── vite-env.d.ts
 ├── .env.example
-├── vercel.json                  # SPA fallback (Vercel)
+├── .github/workflows/deploy.yml  # deploy automático no GitHub Pages
+├── vite.config.ts               # base '/CATALOGO-SP-2027/' + geração do 404.html
 └── package.json
 ```
 
