@@ -62,8 +62,35 @@ favicon apontam para o subdiretório. No desenvolvimento (`npm run dev`), o site
      Ela pode ficar pública: quem protege os dados são as políticas RLS. Guardá-la em Secrets apenas evita
      que ela fique no código.
 
-Se um dos secrets faltar, o workflow para na etapa **"Conferir os secrets do Supabase"** com uma mensagem
-dizendo qual cadastrar.
+### Validação automática
+
+Antes do build, a etapa **"Conferir os secrets do Supabase"** (`scripts/check-supabase-env.mjs`) confere os
+valores. Se algo impediria o site de funcionar, o deploy **não** é feito. A mensagem aparece no resumo da
+execução, em *Actions*:
+
+| Situação detectada | Resultado |
+|---|---|
+| Secret ausente | ❌ bloqueia |
+| **Nome da variável no lugar do valor** (ex.: valor `VITE_SUPABASE_URL`) | ❌ bloqueia |
+| URL e chave trocadas | ❌ bloqueia |
+| Texto de exemplo da documentação (`SEU-PROJETO`) | ❌ bloqueia |
+| URL sem `https://` ou com caminho (ex.: `/rest/v1`) | ❌ bloqueia |
+| **Chave secreta** (`sb_secret_…` ou JWT `service_role`) | ❌ bloqueia: ela ignoraria a RLS e ficaria pública |
+| Chave anon de outro projeto (o `ref` do JWT não bate com a URL) | ❌ bloqueia |
+| Projeto inexistente (DNS), chave recusada (401/403) ou projeto pausado (540) | ❌ bloqueia |
+| Supabase instável (5xx após 3 tentativas) | ⚠️ apenas avisa; o deploy continua |
+| Domínio que não termina em `.supabase.co` | ⚠️ apenas avisa (domínio personalizado) |
+
+O teste de conexão faz um `GET <URL>/auth/v1/settings` com a chave e não altera nada no projeto. Os valores
+das chaves nunca aparecem no log.
+
+Para conferir o `.env.local` antes de subir, rode localmente:
+
+```bash
+npm run check:env
+```
+
+Para checar só o formato, sem testar a conexão, acrescente `-- --offline`.
 
 ---
 
@@ -124,7 +151,7 @@ Clique em **Save**.
 | Sintoma | Causa provável |
 |---|---|
 | Página em branco; no console (F12) aparecem erros 404 em `/assets/…` | `REPO_BASE` em `vite.config.ts` diferente do nome do repositório (atenção às maiúsculas) |
-| Workflow falha em "Conferir os secrets" | Secret não cadastrado ou com outro nome |
+| Workflow falha em "Conferir os secrets" | Leia o motivo no resumo da execução (tabela da seção 2) |
 | Workflow falha em "Checar tipos e lint" | Erro de TypeScript ou lint no código; rode `npm run check` localmente |
 | Deploy recusado pelo ambiente `github-pages` | Branch `main` não permitida em *Settings → Environments* |
 | Site antigo depois do deploy | Cache do navegador; recarregue com Ctrl+Shift+R |

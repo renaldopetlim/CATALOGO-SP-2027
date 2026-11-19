@@ -40,21 +40,13 @@ jobs:
           node-version: 22
           cache: npm
 
+      # Valida formato (URL, chave publishable/anon, nunca a secreta) e testa a
+      # conexão com o projeto. Falha antes do build se algo impedir o site de funcionar.
       - name: Conferir os secrets do Supabase
+        run: node scripts/check-supabase-env.mjs
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-        run: |
-          missing=0
-          if [ -z "$VITE_SUPABASE_URL" ]; then
-            echo "::error title=Secret ausente::Cadastre VITE_SUPABASE_URL em Settings → Secrets and variables → Actions."
-            missing=1
-          fi
-          if [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "::error title=Secret ausente::Cadastre VITE_SUPABASE_ANON_KEY em Settings → Secrets and variables → Actions."
-            missing=1
-          fi
-          exit $missing
 
       - name: Instalar dependências
         run: npm ci

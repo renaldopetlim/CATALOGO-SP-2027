@@ -91,6 +91,7 @@ Abra `http://localhost:5173`. O painel fica em `http://localhost:5173/#/admin`.
 |---|---|
 | `npm run dev` | Servidor de desenvolvimento com recarga automática |
 | `npm run check` | Checagem de tipos (TypeScript strict) + lint (sem `any`) |
+| `npm run check:env` | Confere a URL e a chave do Supabase no `.env.local` e testa a conexão |
 | `npm run build` | Checa os tipos e gera a versão de produção em `dist/` |
 | `npm run preview` | Serve o `dist/` localmente para conferir o build |
 
