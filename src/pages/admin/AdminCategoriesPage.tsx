@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CategoryForm } from '../../components/admin/CategoryForm';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { LiveIndicator } from '../../components/ui/LiveIndicator';
 import { EmptyState, ErrorState } from '../../components/ui/StateMessage';
 import { Toast } from '../../components/ui/Toast';
 import { useAdminCategories } from '../../hooks/useAdminCategories';
@@ -103,6 +104,13 @@ export function AdminCategoriesPage() {
       {status === 'error' && <ErrorState error={error} onRetry={reload} />}
       {status === 'success' && categories.length === 0 && (
         <EmptyState title="Nenhuma categoria cadastrada">Clique em “+ Nova categoria” para começar.</EmptyState>
+      )}
+
+      {status === 'success' && categories.length > 0 && (
+        <p className="result-info">
+          {categories.length === 1 ? '1 categoria' : `${categories.length} categorias`}
+          <LiveIndicator showOffline />
+        </p>
       )}
 
       {status === 'success' && categories.length > 0 && (

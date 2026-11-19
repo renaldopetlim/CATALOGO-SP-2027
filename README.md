@@ -115,6 +115,11 @@ A vitrine se atualiza sozinha quando o admin altera o catálogo: preço, imagem,
 categoria renomeada ou reordenada. Não é preciso recarregar a página. Quando a conexão está ativa, o catálogo
 mostra o indicador **● ao vivo** ao lado do total de itens.
 
+No painel admin, as listas de **Itens** e **Categorias** também se atualizam sozinhas, por exemplo quando outro
+administrador edita algo ou quando você altera em outra aba. Formulários abertos não são afetados. Ali o
+indicador também mostra **● reconectando…**, em laranja, quando a conexão em tempo real cai, avisando que a
+lista pode estar desatualizada até voltar.
+
 - **Como funciona:** cada alteração em `categories` ou `catalog_items` incrementa a linha única de
   `catalog_sync`. A vitrine escuta só essa tabela e, ao receber o aviso, recarrega pelas consultas normais,
   que já respeitam a RLS. Nenhum dado do catálogo trafega pelo Realtime.
