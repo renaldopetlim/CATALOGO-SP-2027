@@ -1,0 +1,804 @@
+/* ==========================================================================
+   1. Reset & Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  line-height: var(--lh);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: var(--acc);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ==========================================================================
+   2. Cabeçalho
+   ========================================================================== */
+.site-header {
+  background: var(--navy);
+  color: var(--white);
+  border-bottom: 4px solid var(--acc);
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.hd {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 14px var(--gutter);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.hd-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.hd-brand img {
+  height: 56px;
+  width: auto;
+  padding: 3px;
+}
+
+.hd b {
+  display: block;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.hd span {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.hd-nav {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.hd-nav a {
+  color: var(--white);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 6px 10px;
+  border-radius: var(--r-tag);
+  border-bottom: 2px solid transparent;
+}
+
+.hd-nav a:hover {
+  text-decoration: underline;
+}
+
+.hd-nav a[aria-current="page"] {
+  border-bottom-color: var(--acc);
+  border-radius: 0;
+}
+
+/* ==========================================================================
+   3. Conteúdo principal & Tipografia
+   ========================================================================== */
+main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: var(--gutter);
+}
+
+h1 {
+  font-size: 1.15rem;
+  margin: 0.2rem 0 0.1rem;
+}
+
+.sub {
+  color: var(--mut);
+  font-size: 0.88rem;
+  margin: 0 0 14px;
+}
+
+.section {
+  margin-top: 24px;
+}
+
+/* Título de seção: mesmo padrão visual da <legend> do Termo */
+.section-title {
+  display: inline-block;
+  background: var(--navy);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 5px 12px;
+  border-radius: var(--r-tag);
+  margin: 0;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.section-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--acc);
+  text-decoration: none;
+}
+
+.section-link:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   4. Cards, campos e botões
+   ========================================================================== */
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 14px;
+}
+
+label,
+.label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 3px;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 1rem;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+input.bad,
+select.bad,
+textarea.bad {
+  border-color: var(--err);
+}
+
+button {
+  font: inherit;
+  font-weight: 700;
+  border: 0;
+  border-radius: var(--r-btn);
+  padding: 12px 18px;
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pri {
+  background: var(--acc);
+  color: var(--white);
+}
+
+.sec {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.btn-sm {
+  padding: 7px 12px;
+  font-size: 0.85rem;
+}
+
+.bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.bar .pri {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ==========================================================================
+   5. Busca e filtro de categorias
+   ========================================================================== */
+.search {
+  position: relative;
+}
+
+.search input {
+  padding-right: 40px;
+}
+
+.search-clear {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--mut);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-block;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.chip:hover {
+  border-color: var(--acc);
+}
+
+.chip[aria-current="true"] {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+}
+
+.result-info {
+  color: var(--mut);
+  font-size: 0.85rem;
+  margin: 14px 0 10px;
+}
+
+/* ==========================================================================
+   6. Grade e card de produto
+   ========================================================================== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.item-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
+}
+
+.item-card:hover {
+  border-color: var(--acc);
+}
+
+.item-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.item-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.item-media .badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+.no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mut);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 12px;
+  flex: 1;
+}
+
+.item-body .label {
+  margin: 0;
+}
+
+.item-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.item-sku {
+  font-size: 0.75rem;
+  color: var(--mut);
+}
+
+.price {
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.price.on-request {
+  font-size: 0.85rem;
+  color: var(--mut);
+}
+
+/* Etiqueta: variação compacta da legend (navy + branco) */
+.badge {
+  display: inline-block;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: var(--r-tag);
+}
+
+.badge.acc {
+  background: var(--acc);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  font-size: 0.75rem;
+  color: var(--mut);
+  border: 1px solid var(--line);
+  border-radius: var(--r-tag);
+  padding: 2px 8px;
+}
+
+/* ==========================================================================
+   7. Cards de categoria (página inicial)
+   ========================================================================== */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.cat-card {
+  display: block;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--acc);
+  border-radius: var(--r-card);
+  padding: 12px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.cat-card:hover {
+  border-color: var(--acc);
+}
+
+.cat-card b {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.cat-card span {
+  display: block;
+  color: var(--mut);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+/* Destaque de abertura da página inicial */
+.hero {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 18px 14px 14px;
+}
+
+.hero h1 {
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   8. Estados: carregando, vazio, erro
+   ========================================================================== */
+.state {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 24px 14px;
+  text-align: center;
+  color: var(--mut);
+  font-size: 0.9rem;
+}
+
+.state b {
+  display: block;
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.state.err b {
+  color: var(--err);
+}
+
+.startup-msg {
+  text-align: left;
+  margin-top: 8px;
+}
+
+.state .bar {
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.state .bar .pri {
+  flex: 0 1 auto;
+}
+
+.skeleton {
+  background: var(--line);
+  border-radius: var(--r-tag);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.skeleton-card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.skeleton-card .skeleton-media {
+  aspect-ratio: 4 / 3;
+  border-radius: 0;
+}
+
+.skeleton-card .skeleton-line {
+  height: 12px;
+  margin: 10px 12px;
+}
+
+.skeleton-card .skeleton-line.short {
+  width: 45%;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* ==========================================================================
+   9. Modal (detalhes do item)
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-modal);
+  padding: 24px;
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+  animation: modalFadeIn 0.25s ease-out;
+}
+
+.modal-content.wide {
+  max-width: 680px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--mut);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.modal-content h3 {
+  margin: 0 0 12px;
+  color: var(--acc);
+  font-size: 1.2rem;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.detail .item-media {
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+
+.detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-title {
+  font-size: 1.15rem;
+  margin: 0;
+  padding-right: 24px;
+}
+
+.detail-info .price {
+  margin-top: 0;
+  padding-top: 0;
+  font-size: 1.2rem;
+}
+
+.detail-text {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.detail-text.mut {
+  color: var(--mut);
+}
+
+.detail-desc {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-content,
+  .skeleton {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   10. Rodapé
+   ========================================================================== */
+.site-footer {
+  width: 100%;
+  max-width: var(--container);
+  margin: 24px auto 16px;
+  padding: 20px var(--gutter) 0;
+  border-top: 1px solid var(--line);
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--mut);
+}
+
+.site-footer p {
+  margin: 6px 0;
+}
+
+.site-footer strong {
+  color: var(--ink);
+}
+
+.site-footer a {
+  color: var(--acc);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
+.suporte-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.dev-info {
+  margin-top: 12px;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.dev-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-footer .dev-links a {
+  color: var(--mut);
+  transition: color 0.2s ease;
+}
+
+.site-footer .dev-links a:hover {
+  color: var(--acc);
+}
+
+/* ==========================================================================
+   11. Responsividade
+   ========================================================================== */
+@media (max-width: 560px) {
+  .hd-brand img {
+    height: 44px;
+  }
+
+  .hd-brand div {
+    display: none;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .cat-grid,
+  .detail {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
