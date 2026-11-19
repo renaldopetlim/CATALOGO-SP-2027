@@ -12,6 +12,11 @@ para gerenciar categorias, itens e imagens sem editar código.
 | [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) | Cores, tipografia, componentes |
 | [docs/CHECKLIST-TESTES.md](docs/CHECKLIST-TESTES.md) | Roteiro de teste ponta a ponta |
 | [docs/DEPLOY-GITHUB-PAGES.md](docs/DEPLOY-GITHUB-PAGES.md) | Deploy automático no GitHub Pages |
+
+**Produto:** título, marca, imagem, selo opcional (`LANÇAMENTO`), tags de busca (ocultas na vitrine),
+ficha técnica opcional e um ou mais blocos **Código + Descrição + Embalagem**. O card da vitrine mostra
+imagem, selo, título e marca; códigos e ficha técnica aparecem nos detalhes. A busca encontra o produto
+por qualquer um dos seus códigos.
 | [supabase/migrations/](supabase/migrations/) | Script SQL do banco |
 
 ---
@@ -27,6 +32,8 @@ para gerenciar categorias, itens e imagens sem editar código.
    (cole o conteúdo e clique em **Run**). Ambos podem ser executados de novo sem erro.
    - `20261119000000_init_catalog.sql`: tabelas, índices, triggers, RLS e bucket `catalog-images`.
    - `20261119020000_realtime_catalog_sync.sql`: atualização da vitrine em tempo real.
+   - `20261119030000_produtos_codigos.sql`: marca, selo, ficha técnica e **vários códigos por produto**.
+     Os produtos que já existirem são migrados: o SKU vira o primeiro código e as descrições viram ficha técnica.
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
@@ -113,7 +120,7 @@ npm install @supabase/supabase-js react-router-dom
 
 ## Atualização em tempo real (Supabase Realtime)
 
-A vitrine se atualiza sozinha quando o admin altera o catálogo: preço, imagem, item novo, item inativado,
+A vitrine se atualiza sozinha quando o admin altera o catálogo: código, imagem, item novo, item inativado,
 categoria renomeada ou reordenada. Não é preciso recarregar a página. Quando a conexão está ativa, o catálogo
 mostra o indicador **● ao vivo** ao lado do total de itens.
 

@@ -14,9 +14,8 @@ import { useCatalogItems } from '../../hooks/useCatalogItems';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../hooks/useToast';
 import { isServiceError } from '../../lib/errors';
-import { formatPrice } from '../../lib/format';
 import { deleteCatalogItem, setItemActive, setItemFeatured } from '../../services/catalogService';
-import type { CatalogItemWithCategory, ItemStatusFilter } from '../../types/catalog';
+import { BADGE_LABELS, type CatalogItemWithCategory, type ItemStatusFilter } from '../../types/catalog';
 
 const STATUS_OPTIONS: Array<{ value: ItemStatusFilter; label: string }> = [
   { value: 'all', label: 'Todos os status' },
@@ -29,6 +28,18 @@ function isStatus(value: string | null): value is ItemStatusFilter {
 }
 
 type Editing = { mode: ItemFormMode; item: CatalogItemWithCategory | null };
+
+/** Primeiro código + quantidade dos demais (lista completa no title). */
+function CodesSummary({ item }: { item: CatalogItemWithCategory }) {
+  const [first, ...rest] = item.codes;
+  if (!first) return <span className="cell-sub">Sem código</span>;
+  return (
+    <span className="codes-summary" title={item.codes.map((code) => [code.code, code.description, code.packaging].filter(Boolean).join(' · ')).join('\n')}>
+      <span className="code-chip">{first.code}</span>
+      {rest.length > 0 && <span className="cell-sub">+{rest.length} {rest.length === 1 ? 'código' : 'códigos'}</span>}
+    </span>
+  );
+}
 
 export function AdminItemsPage() {
   useDocumentTitle('Admin · Itens');
@@ -140,7 +151,7 @@ export function AdminItemsPage() {
         tools={
           <>
             <div className="tb-search">
-              <SearchBar value={search} onSearch={setSearch} label="Buscar itens" placeholder="Buscar por título, SKU, descrição ou tag" hideLabel />
+              <SearchBar value={search} onSearch={setSearch} label="Buscar produtos" placeholder="Buscar por título, marca, código ou tag" hideLabel />
             </div>
             <label className="sr-only" htmlFor="f-cat">
               Categoria
@@ -176,7 +187,7 @@ export function AdminItemsPage() {
         }
         action={
           <button type="button" className="pri" onClick={() => setEditing({ mode: 'create', item: null })} disabled={noCategories}>
-            + Novo item
+            + Novo produto
           </button>
         }
       />
@@ -210,7 +221,7 @@ export function AdminItemsPage() {
         {items.status === 'success' && items.items.length === 0 && !noCategories && (
           <div className="admin-pad">
             <EmptyState title={hasFilters ? 'Nenhum item encontrado com esses filtros' : 'Nenhum item cadastrado'}>
-              {hasFilters ? 'Ajuste a busca ou limpe os filtros.' : 'Clique em “+ Novo item” para começar.'}
+              {hasFilters ? 'Ajuste a busca ou limpe os filtros.' : 'Clique em “+ Novo produto” para começar.'}
             </EmptyState>
           </div>
         )}
@@ -222,11 +233,9 @@ export function AdminItemsPage() {
                 <th scope="col" className="col-thumb">
                   <span className="sr-only">Imagem</span>
                 </th>
-                <th scope="col">Item</th>
+                <th scope="col">Produto</th>
                 <th scope="col">Categoria</th>
-                <th scope="col" className="col-num">
-                  Preço
-                </th>
+                <th scope="col">Códigos</th>
                 <th scope="col">Status</th>
                 <th scope="col">Destaque</th>
                 <th scope="col">Atualizado em</th>
@@ -249,14 +258,19 @@ export function AdminItemsPage() {
                       <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', item })}>
                         {item.title}
                       </button>
-                      <span className="cell-sub">{item.sku ? `SKU ${item.sku}` : 'Sem SKU'}</span>
+                      <span className="cell-sub">
+                        {item.badge && <span className="badge acc mini">{BADGE_LABELS[item.badge]}</span>}
+                        {item.brand ?? 'Sem marca'}
+                      </span>
                     </td>
                     <td className="col-cat">
                       <span className={`badge${item.category.is_active ? '' : ' off'}`} title={item.category.is_active ? undefined : 'Categoria inativa'}>
                         {item.category.name}
                       </span>
                     </td>
-                    <td className={`col-num${item.price === null ? ' mut' : ''}`}>{formatPrice(item.price)}</td>
+                    <td className="col-codes">
+                      <CodesSummary item={item} />
+                    </td>
                     <td className="col-switch">
                       <Switch
                         checked={item.is_active}
@@ -373,8 +387,13 @@ export function AdminItemsPage() {
         >
           <p>
             <strong>{deleting.title}</strong>
-            {deleting.sku ? ` (SKU ${deleting.sku})` : ''} será removido permanentemente, junto com a imagem enviada ao
-            armazenamento. Esta ação não pode ser desfeita.
+            {deleting.codes.length > 0 &&
+              ` (${deleting.codes.length === 1 ? 'código' : `${deleting.codes.length} códigos`}: ${deleting.codes
+                .slice(0, 3)
+                .map((code) => code.code)
+                .join(', ')}${deleting.codes.length > 3 ? '…' : ''})`}{' '}
+            será removido permanentemente, junto com seus códigos e a imagem enviada ao armazenamento. Esta ação não pode
+            ser desfeita.
           </p>
           {deleting.is_active && <p className="hint">Para apenas ocultar da vitrine, use “Apenas inativar”.</p>}
         </ConfirmDialog>

@@ -464,21 +464,10 @@ button:disabled {
   overflow: hidden;
 }
 
-.item-sku {
-  font-size: 0.75rem;
-  color: var(--mut);
-}
-
-.price {
-  margin-top: auto;
-  padding-top: 6px;
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.price.on-request {
-  font-size: 0.85rem;
+/* Marca do produto no card */
+.item-brand {
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--mut);
 }
 
@@ -497,23 +486,6 @@ button:disabled {
 
 .badge.acc {
   background: var(--acc);
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.tag {
-  font-size: 0.75rem;
-  color: var(--mut);
-  border: 1px solid var(--line);
-  border-radius: var(--r-tag);
-  padding: 2px 8px;
 }
 
 /* ==========================================================================
@@ -722,10 +694,52 @@ button:disabled {
   padding-right: 24px;
 }
 
-.detail-info .price {
-  margin-top: 0;
-  padding-top: 0;
-  font-size: 1.2rem;
+.detail-brand {
+  font-size: 0.9rem;
+  color: var(--mut);
+}
+
+.detail-brand strong {
+  color: var(--ink);
+}
+
+/* Ficha técnica: pares rótulo → valor */
+.specs {
+  margin-top: 4px;
+}
+
+.specs dl {
+  margin: 4px 0 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  overflow: hidden;
+}
+
+.specs dl > div {
+  display: grid;
+  grid-template-columns: minmax(90px, 40%) 1fr;
+  border-top: 1px solid var(--line);
+  font-size: 0.88rem;
+}
+
+.specs dl > div:first-child {
+  border-top: 0;
+}
+
+.specs dt,
+.specs dd {
+  margin: 0;
+  padding: 6px 10px;
+}
+
+.specs dt {
+  background: var(--bg);
+  color: var(--mut);
+  font-weight: 600;
+}
+
+.specs .no-label {
+  grid-template-columns: 1fr;
 }
 
 .detail-text {
@@ -739,10 +753,52 @@ button:disabled {
   color: var(--mut);
 }
 
-.detail-desc {
+/* Bloco inferior: Código · Descrição · Embalagem */
+.detail-codes {
   grid-column: 1 / -1;
   border-top: 1px solid var(--line);
   padding-top: 14px;
+}
+
+.codes-scroll {
+  margin-top: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+}
+
+.codes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.codes-table th {
+  background: var(--bg);
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.codes-table td {
+  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.codes-table tbody tr:first-child td {
+  border-top: 0;
+}
+
+.code-cell {
+  font-weight: 700;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes modalFadeIn {

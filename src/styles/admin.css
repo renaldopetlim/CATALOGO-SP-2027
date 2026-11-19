@@ -532,6 +532,30 @@ p.admin-pad.state {
   justify-content: center;
 }
 
+/* Códigos na tabela */
+.col-codes {
+  white-space: nowrap;
+}
+
+.codes-summary {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.code-chip {
+  font-weight: 700;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge.mini {
+  font-size: 0.6rem;
+  padding: 1px 6px;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+
 /* --------------------------------------------------------------------------
    5. Alternador (switch)
    -------------------------------------------------------------------------- */
@@ -700,6 +724,63 @@ p.admin-pad.state {
   min-height: 150px;
 }
 
+/* Editores de linhas (códigos e ficha técnica) */
+.fieldset-hint {
+  margin: 10px 0 8px;
+}
+
+.rows-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.codes-editor .rows-head,
+.codes-editor .rows-line {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 140px auto;
+  gap: 6px;
+  align-items: start;
+}
+
+.specs-editor .rows-head,
+.specs-editor .rows-line {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto;
+  gap: 6px;
+  align-items: start;
+}
+
+.rows-head span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--mut);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.rows-line input {
+  padding: 7px 9px;
+  font-size: 0.9rem;
+}
+
+.rows-actions {
+  display: flex;
+  gap: 3px;
+  padding-top: 4px;
+}
+
+.rows-error {
+  grid-column: 1 / -1;
+  margin-top: -2px;
+}
+
+.rows-add {
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
 @keyframes drawerIn {
   from {
     transform: translateX(32px);
@@ -854,5 +935,18 @@ p.admin-pad.state {
 
   .drawer .g {
     grid-template-columns: 1fr;
+  }
+
+  .codes-editor .rows-head,
+  .specs-editor .rows-head {
+    display: none;
+  }
+
+  .codes-editor .rows-line,
+  .specs-editor .rows-line {
+    grid-template-columns: 1fr;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-input);
   }
 }

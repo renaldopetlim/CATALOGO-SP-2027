@@ -61,28 +61,35 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
 - [ ] Na janela B, abra `/`.
   - **Esperado:** as duas categorias aparecem, na ordem definida.
 
-## 3. Item com imagem
+## 3. Produto com vários códigos e imagem
 
-- [ ] Vá em **Itens** → **+ Novo item** e clique em "Criar item" sem preencher nada.
-  - **Esperado:** "Campo obrigatório" no título e "Selecione uma categoria".
+- [ ] Vá em **Itens** → **+ Novo produto** e clique em "Criar produto" sem preencher nada.
+  - **Esperado:** "Campo obrigatório" no título, "Selecione uma categoria" e "Informe o código".
 - [ ] Preencha:
-  - **Título:** `Porcelanato Acetinado 60x60 Cinza`
-  - **SKU:** `sp-0001` (vira maiúsculo)
+  - **Título:** `Porcelanato Acetinado Cinza`
+  - **Marca:** `Portobello`
   - **Categoria:** Pisos
-  - **Preço:** digite `8990`; deve aparecer `89,90`
-  - **Tags:** `piso, área externa`
-  - **Descrição curta e detalhada:** livres
+  - **Selo:** `LANÇAMENTO`
+  - **Códigos** (use "+ Adicionar código"):
+    - `sp-0001` · `60 x 60 cm` · `Caixa 2,16 m²`. O código vira maiúsculo.
+    - `SP-0002` · `90 x 90 cm` · `Caixa 1,62 m²`
+  - **Tags de busca:** `piso, área externa`
+  - **Ficha técnica:** `PEI` → `4`; `Acabamento` → `Acetinado`
+- [ ] Repita um código em duas linhas e tente salvar.
+  - **Esperado:** "Código repetido (linha N)". Corrija antes de continuar.
 - [ ] Em **Imagem → Enviar arquivo**, escolha um PDF.
   - **Esperado:** "Formato de imagem não permitido…"
 - [ ] Escolha um JPG ou PNG de até 5 MB.
   - **Esperado:** a pré-visualização aparece.
 - [ ] Marque **Destaque na página inicial** e clique em **Criar item**.
-  - **Esperado:** "… criado." e o item na lista, com miniatura e selo DESTAQUE.
+  - **Esperado:** "… criado." e o produto na lista, com miniatura, `LANÇAMENTO` e a coluna Códigos mostrando "SP-0001 +1 código".
 - [ ] No Supabase, em *Storage → catalog-images → items/AAAA/*, confira se o arquivo está lá.
-- [ ] Crie um segundo item com o SKU `SP-0001`.
-  - **Esperado:** "Já existe um item com este SKU."
-- [ ] Mude o SKU, deixe o preço vazio, use **URL externa** com uma imagem pública https e salve.
-  - **Esperado:** o item é criado com "Sob consulta" no lugar do preço.
+- [ ] Crie outro produto usando o código `SP-0001`.
+  - **Esperado:** "Um dos códigos informados já está cadastrado em outro produto."
+- [ ] Troque para um código novo, use **URL externa** com uma imagem pública https e salve.
+  - **Esperado:** o produto é criado.
+- [ ] Edite o porcelanato: remova a linha `SP-0002` e mude a embalagem da primeira. Salve e reabra.
+  - **Esperado:** só a primeira linha, com a embalagem nova.
 - [ ] Crie um terceiro item na categoria **Hidráulica**, sem imagem.
 
 ## 4. Vitrine: busca e filtros (janela B, anônima)
@@ -90,8 +97,10 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
 - [ ] `/` mostra o item marcado como destaque em **Destaques**.
 - [ ] Busque `ceramica` (sem acento) ou `area externa`.
   - **Esperado:** encontra o porcelanato pelas tags e pela descrição.
-- [ ] Busque o SKU `sp-0001` em minúsculas.
-  - **Esperado:** encontra o item.
+- [ ] Busque os códigos `sp-0001` e `sp-0002`, em minúsculas, a marca `portobello` e o valor da ficha técnica `acetinado`.
+  - **Esperado:** cada busca encontra o porcelanato.
+- [ ] Olhe o card do porcelanato.
+  - **Esperado:** mostra imagem, `LANÇAMENTO`, título e marca. Não mostra tags, códigos nem preço.
 - [ ] Busque `porcelanato 60x60`.
   - **Esperado:** encontra, porque as duas palavras precisam estar presentes.
 - [ ] Busque `xyz123`.
@@ -101,7 +110,7 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
 - [ ] Clique em **Todos**.
   - **Esperado:** a categoria é removida da URL e a busca continua.
 - [ ] Abra um item.
-  - **Esperado:** o modal mostra foto, preço, tags e descrição, e a URL ganha `&item=…`.
+  - **Esperado:** o modal mostra foto, selo, marca, ficha técnica e a tabela **Código · Descrição · Embalagem**, sem as tags. A URL ganha `&item=…`.
 - [ ] Feche o modal com **Esc**, depois reabra e feche com o botão **Voltar** do navegador.
   - **Esperado:** a busca e a categoria continuam iguais.
 - [ ] Copie a URL com `&item=…` e cole numa nova aba.
@@ -113,11 +122,11 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
 
 ## 5. Editar e sincronizar (A edita, B confere)
 
-- [ ] Na janela A, edite o porcelanato: troque a imagem por outro arquivo e mude o preço.
+- [ ] Na janela A, edite o porcelanato: troque a imagem por outro arquivo e acrescente um código.
   - **Esperado:** "… atualizado."
   - No Storage, o arquivo **antigo** foi removido e o novo está lá.
 - [ ] Na janela B, volte para a aba ou recarregue a página.
-  - **Esperado:** aparecem a imagem e o preço novos.
+  - **Esperado:** aparecem a imagem nova e o código novo nos detalhes.
 - [ ] Na janela A, clique em **Inativar** no porcelanato.
   - **Esperado:** na janela B ele some da vitrine, da busca e dos destaques.
   - Um link direto `?item=…` mostra "Item indisponível".
@@ -135,8 +144,8 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
 
 - [ ] Na janela B, abra `#/catalogo`.
   - **Esperado:** o indicador **● ao vivo** aparece ao lado do total de itens.
-- [ ] Na janela A, altere o preço de um item. **Não** mexa na janela B.
-  - **Esperado:** em cerca de 1 segundo, o preço novo aparece na janela B.
+- [ ] Na janela A, altere a marca de um produto. **Não** mexa na janela B.
+  - **Esperado:** em cerca de 1 segundo, a marca nova aparece no card da janela B.
 - [ ] Na janela B, abra o modal de um item. Na janela A, inative esse item.
   - **Esperado:** o modal da janela B passa a mostrar "Item indisponível" e o item sai da lista.
 - [ ] Na janela A, crie um item em destaque com a janela B aberta em `/`.

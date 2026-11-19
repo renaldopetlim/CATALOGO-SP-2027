@@ -2,27 +2,47 @@ import { supabase } from '../lib/supabase';
 import { ServiceError, toServiceError } from '../lib/errors';
 import { emptyToNull, isHttpUrl, toSearchTerms } from '../lib/format';
 import { deleteCatalogImage, isCatalogStorageUrl } from './storageService';
-import type { TableInsert, TableUpdate } from '../types/database';
-import type {
-  CatalogFilters,
-  CatalogItemWithCategory,
-  CatalogListResult,
-  CatalogScope,
-  CreateCatalogItemInput,
-  DeleteItemResult,
-  UpdateCatalogItemInput,
+import type { Json, TableUpdate } from '../types/database';
+import {
+  isCatalogBadge,
+  parseSpecifications,
+  type CatalogFilters,
+  type CatalogItemCodeInput,
+  type CatalogItemWithCategory,
+  type CatalogListResult,
+  type CatalogScope,
+  type DeleteItemResult,
+  type SaveCatalogItemInput,
+  type Specification,
+  type UpdateCatalogItemFlagsInput,
 } from '../types/catalog';
 
 /**
- * Colunas retornadas (sem `search_text`) + categoria via JOIN.
+ * Colunas do produto (sem `search_text` e `price`) + categoria + códigos.
  * `!inner` faz o item sem categoria visível não aparecer, e permite filtrar
  * pela coluna da categoria (`category.is_active`).
  */
 const ITEM_SELECT =
-  'id, title, sku, category_id, short_description, detailed_description, price, image_url, tags, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active)';
+  'id, title, brand, badge, category_id, image_url, tags, specifications, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active), codes:catalog_item_codes(id, code, description, packaging, sort_order)';
 
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
+
+/** Linha como vem do banco (badge texto livre, ficha técnica em JSON). */
+type ItemRow = Omit<CatalogItemWithCategory, 'badge' | 'specifications'> & {
+  badge: string | null;
+  specifications: Json;
+};
+
+/** Converte a linha do banco no tipo de domínio (selo validado, ficha técnica tipada, códigos ordenados). */
+function toItem(row: ItemRow): CatalogItemWithCategory {
+  return {
+    ...row,
+    badge: isCatalogBadge(row.badge) ? row.badge : null,
+    specifications: parseSpecifications(row.specifications),
+    codes: [...row.codes].sort((a, b) => a.sort_order - b.sort_order),
+  };
+}
 
 /* ==========================================================================
    CONSULTAS
@@ -47,7 +67,8 @@ function buildListQuery(filters: CatalogFilters, scope: CatalogScope) {
   if (filters.categoryId) query = query.eq('category_id', filters.categoryId);
   if (filters.featured) query = query.eq('is_featured', true);
 
-  // Cada termo precisa aparecer em algum campo (AND entre termos).
+  // Cada termo precisa aparecer em algum campo (título, marca, tags, ficha
+  // técnica ou qualquer código do produto). AND entre termos.
   for (const term of toSearchTerms(filters.search ?? '')) {
     query = query.ilike('search_text', `%${term}%`);
   }
@@ -55,12 +76,6 @@ function buildListQuery(filters: CatalogFilters, scope: CatalogScope) {
   switch (filters.sort ?? 'recent') {
     case 'title_asc':
       query = query.order('title', { ascending: true });
-      break;
-    case 'price_asc':
-      query = query.order('price', { ascending: true, nullsFirst: false });
-      break;
-    case 'price_desc':
-      query = query.order('price', { ascending: false, nullsFirst: false });
       break;
     case 'recent':
       query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false });
@@ -75,7 +90,7 @@ async function listItems(filters: CatalogFilters, scope: CatalogScope): Promise<
   try {
     const { data, error, count } = await buildListQuery(filters, scope);
     if (error) throw error;
-    return { items: data, total: count ?? data.length };
+    return { items: data.map(toItem), total: count ?? data.length };
   } catch (error) {
     throw toServiceError(error, 'carregar os itens do catálogo');
   }
@@ -109,7 +124,7 @@ export async function getCatalogItemById(
     const { data, error } = await query.maybeSingle();
     if (error) throw error;
     if (!data) throw new ServiceError('not_found', 'Item não encontrado ou indisponível.');
-    return data;
+    return toItem(data);
   } catch (error) {
     throw toServiceError(error, 'carregar o item');
   }
@@ -121,9 +136,15 @@ export async function getCatalogItemById(
 
 function validateTitle(title: string): string {
   const trimmed = title.trim();
-  if (trimmed.length === 0) throw new ServiceError('validation', 'Informe o título do item.');
+  if (trimmed.length === 0) throw new ServiceError('validation', 'Informe o título do produto.');
   if (trimmed.length > 200) throw new ServiceError('validation', 'O título deve ter até 200 caracteres.');
   return trimmed;
+}
+
+function validateBrand(brand: string | null | undefined): string | null {
+  const value = emptyToNull(brand);
+  if (value && value.length > 120) throw new ServiceError('validation', 'A marca deve ter até 120 caracteres.');
+  return value;
 }
 
 function validateCategoryId(categoryId: string): string {
@@ -131,15 +152,7 @@ function validateCategoryId(categoryId: string): string {
   return categoryId;
 }
 
-function validatePrice(price: number | null): number | null {
-  if (price === null) return null;
-  if (!Number.isFinite(price) || price < 0) {
-    throw new ServiceError('validation', 'O preço deve ser um valor maior ou igual a zero.');
-  }
-  return Math.round(price * 100) / 100;
-}
-
-function validateImageUrl(url: string | null): string | null {
+function validateImageUrl(url: string | null | undefined): string | null {
   const value = emptyToNull(url);
   if (value !== null && !isHttpUrl(value)) {
     throw new ServiceError('validation', 'A URL da imagem deve começar com http:// ou https://.');
@@ -152,52 +165,90 @@ function cleanTags(tags: string[]): string[] {
   return tags.map((tag) => tag.trim()).filter((tag) => tag.length > 0);
 }
 
+/** Remove linhas vazias; mantém linhas só com valor (rótulo vazio). */
+function cleanSpecifications(specs: Specification[]): Specification[] {
+  return specs
+    .map((spec) => ({ label: spec.label.trim(), value: spec.value.trim() }))
+    .filter((spec) => spec.value.length > 0);
+}
+
+/** Valida os blocos Código + Descrição + Embalagem (ao menos um; códigos únicos no produto). */
+function cleanCodes(codes: CatalogItemCodeInput[]): CatalogItemCodeInput[] {
+  const cleaned = codes
+    .map((entry) => ({
+      ...(entry.id ? { id: entry.id } : {}),
+      code: entry.code.trim().toUpperCase(),
+      description: emptyToNull(entry.description),
+      packaging: emptyToNull(entry.packaging),
+    }))
+    .filter((entry) => entry.code || entry.description || entry.packaging);
+
+  if (cleaned.length === 0) {
+    throw new ServiceError('validation', 'Informe ao menos um código para o produto.');
+  }
+  const missing = cleaned.findIndex((entry) => !entry.code);
+  if (missing >= 0) {
+    throw new ServiceError('validation', `Preencha o código da linha ${missing + 1}.`);
+  }
+  const seen = new Set<string>();
+  for (const entry of cleaned) {
+    if (seen.has(entry.code)) {
+      throw new ServiceError('validation', `O código ${entry.code} aparece mais de uma vez neste produto.`);
+    }
+    seen.add(entry.code);
+  }
+  return cleaned;
+}
+
 /* ==========================================================================
    ESCRITA (ADMIN)
    ========================================================================== */
 
-export async function createCatalogItem(input: CreateCatalogItemInput): Promise<CatalogItemWithCategory> {
+/**
+ * Cria (id ausente) ou edita um produto junto com todos os seus códigos,
+ * numa única transação no banco (`save_catalog_item`). Códigos que não
+ * vierem na lista são removidos.
+ */
+export async function saveCatalogItemRecord(
+  id: string | null,
+  input: SaveCatalogItemInput,
+): Promise<CatalogItemWithCategory> {
   try {
-    const payload: TableInsert<'catalog_items'> = {
+    const item = {
       title: validateTitle(input.title),
+      brand: validateBrand(input.brand),
       category_id: validateCategoryId(input.category_id),
-      sku: emptyToNull(input.sku),
-      short_description: emptyToNull(input.short_description),
-      detailed_description: emptyToNull(input.detailed_description),
-      price: validatePrice(input.price ?? null),
-      image_url: validateImageUrl(input.image_url ?? null),
+      badge: input.badge ?? null,
+      image_url: validateImageUrl(input.image_url),
       tags: cleanTags(input.tags ?? []),
+      specifications: cleanSpecifications(input.specifications ?? []),
       is_featured: input.is_featured ?? false,
       is_active: input.is_active ?? true,
     };
+    const codes = cleanCodes(input.codes);
 
-    const { data, error } = await supabase.from('catalog_items').insert(payload).select(ITEM_SELECT).single();
+    const { data: savedId, error } = await supabase.rpc('save_catalog_item', {
+      p_id: id,
+      p_item: item,
+      p_codes: codes,
+    });
     if (error) throw error;
-    return data;
+
+    return await getCatalogItemById(savedId, 'admin');
   } catch (error) {
-    throw toServiceError(error, 'criar o item');
+    throw toServiceError(error, id ? 'salvar o produto' : 'criar o produto');
   }
 }
 
-export async function updateCatalogItem(
+/** Alterações rápidas da listagem (destaque / ativo), sem tocar nos códigos. */
+export async function updateCatalogItemFlags(
   id: string,
-  input: UpdateCatalogItemInput,
+  input: UpdateCatalogItemFlagsInput,
 ): Promise<CatalogItemWithCategory> {
   try {
     const payload: TableUpdate<'catalog_items'> = {};
-    if (input.title !== undefined) payload.title = validateTitle(input.title);
-    if (input.category_id !== undefined) payload.category_id = validateCategoryId(input.category_id);
-    if (input.sku !== undefined) payload.sku = emptyToNull(input.sku);
-    if (input.short_description !== undefined) payload.short_description = emptyToNull(input.short_description);
-    if (input.detailed_description !== undefined) {
-      payload.detailed_description = emptyToNull(input.detailed_description);
-    }
-    if (input.price !== undefined) payload.price = validatePrice(input.price);
-    if (input.image_url !== undefined) payload.image_url = validateImageUrl(input.image_url);
-    if (input.tags !== undefined) payload.tags = cleanTags(input.tags);
     if (input.is_featured !== undefined) payload.is_featured = input.is_featured;
     if (input.is_active !== undefined) payload.is_active = input.is_active;
-
     if (Object.keys(payload).length === 0) {
       throw new ServiceError('validation', 'Nenhuma alteração informada.');
     }
@@ -210,19 +261,19 @@ export async function updateCatalogItem(
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) throw new ServiceError('not_found', 'Item não encontrado ou sem permissão para editá-lo.');
-    return data;
+    if (!data) throw new ServiceError('not_found', 'Produto não encontrado ou sem permissão para editá-lo.');
+    return toItem(data);
   } catch (error) {
-    throw toServiceError(error, 'salvar o item');
+    throw toServiceError(error, 'salvar o produto');
   }
 }
 
 export function setItemActive(id: string, isActive: boolean): Promise<CatalogItemWithCategory> {
-  return updateCatalogItem(id, { is_active: isActive });
+  return updateCatalogItemFlags(id, { is_active: isActive });
 }
 
 export function setItemFeatured(id: string, isFeatured: boolean): Promise<CatalogItemWithCategory> {
-  return updateCatalogItem(id, { is_featured: isFeatured });
+  return updateCatalogItemFlags(id, { is_featured: isFeatured });
 }
 
 /** Desativação "suave": o item some da vitrine, mas continua no admin. */
@@ -231,8 +282,8 @@ export function deactivateCatalogItem(id: string): Promise<CatalogItemWithCatego
 }
 
 /**
- * Exclui o item definitivamente e, se a imagem estiver no bucket do catálogo,
- * remove o arquivo também. URLs externas não são tocadas.
+ * Exclui o produto (e, em cascata, seus códigos). Se a imagem estiver no
+ * bucket do catálogo, remove o arquivo também. URLs externas não são tocadas.
  * Se a remoção da imagem falhar, o item continua excluído e `imageRemoved` = false.
  */
 export async function deleteCatalogItem(id: string): Promise<DeleteItemResult> {
@@ -243,10 +294,10 @@ export async function deleteCatalogItem(id: string): Promise<DeleteItemResult> {
     if (error) throw error;
 
     const deleted = data[0];
-    if (!deleted) throw new ServiceError('not_found', 'Item não encontrado ou sem permissão para excluí-lo.');
+    if (!deleted) throw new ServiceError('not_found', 'Produto não encontrado ou sem permissão para excluí-lo.');
     imageUrl = deleted.image_url;
   } catch (error) {
-    throw toServiceError(error, 'excluir o item');
+    throw toServiceError(error, 'excluir o produto');
   }
 
   if (!imageUrl || !isCatalogStorageUrl(imageUrl)) return { imageRemoved: true };
@@ -255,7 +306,7 @@ export async function deleteCatalogItem(id: string): Promise<DeleteItemResult> {
     await deleteCatalogImage(imageUrl);
     return { imageRemoved: true };
   } catch (error) {
-    console.warn('Item excluído, mas a imagem não pôde ser removida do Storage.', error);
+    console.warn('Produto excluído, mas a imagem não pôde ser removida do Storage.', error);
     return { imageRemoved: false };
   }
 }

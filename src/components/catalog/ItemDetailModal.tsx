@@ -1,8 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useItemDetail } from '../../hooks/useItemDetail';
 import { useCatalogParams } from '../../hooks/useCatalogParams';
-import { formatPrice } from '../../lib/format';
-import type { CatalogItemWithCategory } from '../../types/catalog';
+import { BADGE_LABELS, type CatalogItemWithCategory } from '../../types/catalog';
 import { Modal } from '../ui/Modal';
 import { ErrorState } from '../ui/StateMessage';
 import { ItemImage } from './ItemImage';
@@ -19,7 +18,8 @@ type ItemDetailModalProps = {
 
 /**
  * Modal de detalhes controlado pelo parâmetro `?item=<id>` da URL.
- * Fechar mantém categoria e busca intactas.
+ * Mostra imagem, selo, título, marca, ficha técnica e o bloco de códigos
+ * (Código · Descrição · Embalagem). As tags de busca não são exibidas.
  */
 export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
   const { itemId, closeItem } = useCatalogParams();
@@ -39,7 +39,7 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
   };
 
   return (
-    <Modal title={item?.title ?? 'Detalhes do item'} onClose={close} size="wide">
+    <Modal title={item?.title ?? 'Detalhes do produto'} onClose={close} size="wide">
       {status === 'loading' && (
         <p className="state" role="status">
           Carregando detalhes…
@@ -49,7 +49,7 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
       {status === 'error' && (
         <ErrorState
           error={error}
-          title={error?.kind === 'not_found' ? 'Item indisponível' : 'Não foi possível carregar'}
+          title={error?.kind === 'not_found' ? 'Produto indisponível' : 'Não foi possível carregar'}
           onRetry={error?.kind === 'not_found' ? undefined : reload}
         />
       )}
@@ -58,30 +58,58 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
         <article className="detail">
           <div className="item-media">
             <ItemImage src={item.image_url} alt={item.title} loading="eager" />
-            {item.is_featured && <span className="badge acc">Destaque</span>}
+            {item.badge && <span className="badge acc">{BADGE_LABELS[item.badge]}</span>}
           </div>
 
           <div className="detail-info">
             <span className="label">{item.category.name}</span>
             <h2 className="detail-title">{item.title}</h2>
-            {item.sku && <span className="item-sku">SKU {item.sku}</span>}
-            <span className={`price${item.price === null ? ' on-request' : ''}`}>{formatPrice(item.price)}</span>
-            {item.short_description && <p className="detail-text">{item.short_description}</p>}
-            {item.tags.length > 0 && (
-              <ul className="tags" aria-label="Tags">
-                {item.tags.map((tag) => (
-                  <li key={tag} className="tag">
-                    {tag}
-                  </li>
-                ))}
-              </ul>
+            {item.brand && (
+              <span className="detail-brand">
+                Marca: <strong>{item.brand}</strong>
+              </span>
+            )}
+
+            {item.specifications.length > 0 && (
+              <div className="specs">
+                <span className="label">Ficha técnica</span>
+                <dl>
+                  {item.specifications.map((spec, index) => (
+                    <div key={`${spec.label}-${index}`} className={spec.label ? undefined : 'no-label'}>
+                      {spec.label && <dt>{spec.label}</dt>}
+                      <dd>{spec.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             )}
           </div>
 
-          {item.detailed_description && (
-            <div className="detail-desc">
-              <span className="label">Descrição</span>
-              <p className="detail-text mut">{item.detailed_description}</p>
+          {item.codes.length > 0 && (
+            <div className="detail-codes">
+              <span className="label">
+                {item.codes.length === 1 ? 'Código' : `Códigos disponíveis (${item.codes.length})`}
+              </span>
+              <div className="codes-scroll">
+                <table className="codes-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Código</th>
+                      <th scope="col">Descrição</th>
+                      <th scope="col">Embalagem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {item.codes.map((code) => (
+                      <tr key={code.id}>
+                        <td className="code-cell">{code.code}</td>
+                        <td>{code.description ?? '—'}</td>
+                        <td>{code.packaging ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </article>

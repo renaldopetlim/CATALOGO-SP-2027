@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
-import { formatPrice } from '../../lib/format';
-import type { CatalogItemWithCategory } from '../../types/catalog';
+import { BADGE_LABELS, type CatalogItemWithCategory } from '../../types/catalog';
 import { ItemImage } from './ItemImage';
 
 /** Estado enviado ao abrir o modal a partir de uma lista (permite fechar com "voltar"). */
@@ -12,6 +11,10 @@ type ItemCardProps = {
   to: string;
 };
 
+/**
+ * Card da vitrine: imagem, selo opcional, título e marca.
+ * Códigos, ficha técnica e categoria ficam nos detalhes; tags nunca aparecem.
+ */
 export function ItemCard({ item, to }: ItemCardProps) {
   const state: ItemLinkState = { fromList: true };
 
@@ -19,13 +22,11 @@ export function ItemCard({ item, to }: ItemCardProps) {
     <Link to={to} state={state} preventScrollReset className="item-card" aria-label={`Ver detalhes: ${item.title}`}>
       <div className="item-media">
         <ItemImage src={item.image_url} alt="" />
-        {item.is_featured && <span className="badge acc">Destaque</span>}
+        {item.badge && <span className="badge acc">{BADGE_LABELS[item.badge]}</span>}
       </div>
       <div className="item-body">
-        <span className="label">{item.category.name}</span>
         <h3 className="item-title">{item.title}</h3>
-        {item.sku && <span className="item-sku">SKU {item.sku}</span>}
-        <span className={`price${item.price === null ? ' on-request' : ''}`}>{formatPrice(item.price)}</span>
+        {item.brand && <span className="item-brand">{item.brand}</span>}
       </div>
     </Link>
   );

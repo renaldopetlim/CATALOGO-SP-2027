@@ -92,13 +92,14 @@ export type Database = {
         Row: {
           id: string;
           title: string;
-          sku: string | null;
+          brand: string | null;
+          badge: string | null;
           category_id: string;
-          short_description: string | null;
-          detailed_description: string | null;
+          /** Mantida no banco, sem uso na interface atual. */
           price: number | null;
           image_url: string | null;
           tags: string[];
+          specifications: Json;
           is_featured: boolean;
           is_active: boolean;
           created_at: string;
@@ -108,13 +109,13 @@ export type Database = {
         Insert: {
           id?: string;
           title: string;
-          sku?: string | null;
+          brand?: string | null;
+          badge?: string | null;
           category_id: string;
-          short_description?: string | null;
-          detailed_description?: string | null;
           price?: number | null;
           image_url?: string | null;
           tags?: string[];
+          specifications?: Json;
           is_featured?: boolean;
           is_active?: boolean;
           created_at?: string;
@@ -124,13 +125,13 @@ export type Database = {
         Update: {
           id?: string;
           title?: string;
-          sku?: string | null;
+          brand?: string | null;
+          badge?: string | null;
           category_id?: string;
-          short_description?: string | null;
-          detailed_description?: string | null;
           price?: number | null;
           image_url?: string | null;
           tags?: string[];
+          specifications?: Json;
           is_featured?: boolean;
           is_active?: boolean;
           created_at?: string;
@@ -147,6 +148,47 @@ export type Database = {
           },
         ];
       };
+      catalog_item_codes: {
+        Row: {
+          id: string;
+          item_id: string;
+          code: string;
+          description: string | null;
+          packaging: string | null;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          item_id: string;
+          code: string;
+          description?: string | null;
+          packaging?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          item_id?: string;
+          code?: string;
+          description?: string | null;
+          packaging?: string | null;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'catalog_item_codes_item_id_fkey';
+            columns: ['item_id'];
+            isOneToOne: false;
+            referencedRelation: 'catalog_items';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -155,6 +197,10 @@ export type Database = {
       is_admin: {
         Args: never;
         Returns: boolean;
+      };
+      save_catalog_item: {
+        Args: { p_id: string | null; p_item: Json; p_codes: Json };
+        Returns: string;
       };
     };
     Enums: {

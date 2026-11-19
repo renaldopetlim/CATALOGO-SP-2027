@@ -4,7 +4,7 @@ import { useDialogBehavior } from '../../hooks/useDialogBehavior';
 
 type DrawerProps = {
   title: string;
-  /** Texto curto abaixo do título (ex.: "SKU SP-0001"). */
+  /** Texto curto abaixo do título (ex.: "Cód. SP-0001 · Pisos"). */
   subtitle?: string;
   onClose: () => void;
   /** Conteúdo rolável. */

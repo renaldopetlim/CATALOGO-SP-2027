@@ -48,7 +48,7 @@ export function CatalogPage() {
     <>
       <h1>{selectedCategory ? selectedCategory.name : 'Catálogo'}</h1>
       <p className="sub">
-        {selectedCategory?.description ?? 'Filtre por categoria ou busque por nome, SKU, descrição ou tag.'}
+        {selectedCategory?.description ?? 'Filtre por categoria ou busque por nome, marca, código ou especificação.'}
       </p>
 
       <SearchBar value={search} onSearch={setSearch} />
