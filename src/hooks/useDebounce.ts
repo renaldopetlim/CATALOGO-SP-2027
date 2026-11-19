@@ -1,0 +1,13 @@
+import { useEffect, useState } from 'react';
+
+/** Retorna `value` somente depois de `delayMs` sem alterações. */
+export function useDebounce<T>(value: T, delayMs = 350): T {
+  const [debounced, setDebounced] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return debounced;
+}

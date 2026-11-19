@@ -9,57 +9,52 @@
 
 ```text
 catalogo-sp-2027/
-├── docs/
-│   ├── ARQUITETURA.md
-│   └── DESIGN-SYSTEM.md
-├── supabase/
-│   └── migrations/
-│       └── 20261119000000_init_catalog.sql   # tabelas, índices, triggers, RLS, bucket
+├── docs/                        # ARQUITETURA, DESIGN-SYSTEM, CHECKLIST-TESTES
+├── supabase/migrations/         # SQL: tabelas, índices, triggers, RLS, bucket
 ├── public/
-│   └── assets/                  # logo.png, logo-mini.ico
+│   ├── assets/                  # logo.png, logo-mini.ico
+│   └── _redirects               # SPA fallback (Netlify)
 ├── src/
 │   ├── types/
-│   │   ├── catalog.ts           # Category, CatalogItem, inputs, filtros
-│   │   └── database.ts          # tipo Database usado pelo cliente Supabase
+│   │   ├── database.ts          # tipo Database (formato do supabase gen types)
+│   │   └── catalog.ts           # Category, CatalogItem, inputs, filtros
 │   ├── lib/
 │   │   ├── supabase.ts          # cliente tipado + validação das variáveis VITE_*
-│   │   ├── errors.ts            # ServiceError e conversão de erros do Supabase
-│   │   └── format.ts            # moeda (R$), slug, normalização de busca
+│   │   ├── errors.ts            # ServiceError (mensagens em português)
+│   │   └── format.ts            # moeda, slug, busca sem acento, máscaras
 │   ├── services/
-│   │   ├── categoryService.ts
-│   │   ├── catalogService.ts
-│   │   └── storageService.ts
+│   │   ├── authService.ts       # login, logout, is_admin()
+│   │   ├── categoryService.ts   # listar, CRUD, reordenar, exclusão protegida
+│   │   ├── catalogService.ts    # listar com filtros, CRUD, destaque/ativo
+│   │   ├── storageService.ts    # upload/remoção no bucket catalog-images
+│   │   └── adminCatalogService.ts # salvar item coordenando o Storage
 │   ├── hooks/
-│   │   ├── useAuth.ts           # sessão + verificação de admin
-│   │   ├── useCategories.ts
-│   │   ├── useCatalogItems.ts
-│   │   └── useDebounce.ts
+│   │   ├── useResource.ts       # carregamento genérico (sem "piscar" ao recarregar)
+│   │   ├── useCatalogItems.ts   # lista paginada (vitrine e admin)
+│   │   ├── useCategories.ts / useAdminCategories.ts / useItemDetail.ts
+│   │   ├── useCatalogParams.ts  # estado da vitrine na URL
+│   │   ├── useAuth.ts + authContext.ts
+│   │   └── useDebounce, useDocumentTitle, useRefetchOnFocus, useToast
 │   ├── components/
-│   │   ├── layout/              # Header, Footer, AdminLayout
-│   │   ├── catalog/             # ItemCard, CategoryFilter, SearchBar, ItemDetailModal
-│   │   ├── admin/               # CategoryForm, ItemForm, ImageInput, ConfirmDialog
-│   │   ├── ui/                  # Button, Field, Modal, StatusMessage, Spinner
-│   │   └── ProtectedRoute.tsx
+│   │   ├── auth/AuthProvider.tsx
+│   │   ├── ProtectedRoute.tsx
+│   │   ├── layout/              # SiteHeader, SiteFooter, PublicLayout, AdminLayout
+│   │   ├── catalog/             # ItemCard, ItemGrid, ItemImage, CategoryFilter, SearchBar, ItemDetailModal
+│   │   ├── admin/               # ItemForm, CategoryForm, ImageInput
+│   │   └── ui/                  # Modal, ConfirmDialog, Toast, StateMessage, StartupError
 │   ├── pages/
 │   │   ├── HomePage.tsx         # /
 │   │   ├── CatalogPage.tsx      # /catalogo?categoria=&q=&item=
 │   │   ├── LoginPage.tsx        # /login
 │   │   ├── NotFoundPage.tsx
-│   │   └── admin/
-│   │       ├── AdminDashboardPage.tsx
-│   │       ├── AdminCategoriesPage.tsx
-│   │       └── AdminItemsPage.tsx
-│   ├── styles/
-│   │   ├── tokens.css           # variáveis do Design System (light/dark)
-│   │   └── global.css           # reset, base e componentes compartilhados
-│   ├── App.tsx                  # definição das rotas
+│   │   └── admin/               # AdminItemsPage (/admin), AdminCategoriesPage (/admin/categorias)
+│   ├── styles/                  # tokens.css (Design System), global.css
+│   ├── App.tsx                  # rotas (admin carregado sob demanda)
 │   ├── main.tsx
-│   └── vite-env.d.ts            # tipagem de import.meta.env
+│   └── vite-env.d.ts
 ├── .env.example
-├── index.html
-├── package.json
-├── tsconfig.json
-└── vite.config.ts
+├── vercel.json                  # SPA fallback (Vercel)
+└── package.json
 ```
 
 Filtros e busca do catálogo ficam na URL (`?categoria=&q=&item=`). Assim, abrir e fechar o

@@ -9,6 +9,19 @@ type SupabaseEnv = {
   anonKey: string;
 };
 
+/** Detecta chaves secretas (novas `sb_secret_…` ou JWT legado com role `service_role`). */
+function isSecretKey(key: string): boolean {
+  if (key.startsWith('sb_secret_')) return true;
+  const payload = key.split('.')[1];
+  if (!payload) return false;
+  try {
+    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return /"role"\s*:\s*"service_role"/.test(json);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Lê e valida as variáveis de ambiente.
  * Falha cedo, com mensagem clara, em vez de gerar erros confusos nas requisições.
@@ -34,7 +47,7 @@ function readSupabaseEnv(): SupabaseEnv {
 
   if (!anonKey) {
     problems.push('VITE_SUPABASE_ANON_KEY não definida.');
-  } else if (anonKey.startsWith('sb_secret_') || anonKey.includes('service_role')) {
+  } else if (isSecretKey(anonKey)) {
     // Chave secreta ignora a RLS: nunca pode ir para o navegador.
     problems.push('VITE_SUPABASE_ANON_KEY parece ser uma chave secreta. Use a chave anon/publishable.');
   }

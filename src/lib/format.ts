@@ -55,3 +55,39 @@ export function isHttpUrl(value: string): boolean {
     return false;
   }
 }
+
+/* ==========================================================================
+   Campos de formulário
+   ========================================================================== */
+
+/** Máscara de moeda enquanto digita (mesmo comportamento do Termo): "123456" → "1.234,56". */
+export function maskPriceInput(raw: string): string {
+  const digits = raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 12);
+  if (!digits) return '';
+  return (Number.parseInt(digits, 10) / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** "1.234,56" → 1234.56; vazio → `null` (sob consulta). */
+export function parsePriceInput(value: string): number | null {
+  const digits = value.replace(/\D/g, '');
+  if (!digits) return null;
+  return Number.parseInt(digits, 10) / 100;
+}
+
+/** 1234.56 → "1.234,56"; `null` → "". */
+export function priceToInput(value: number | null): string {
+  if (value === null) return '';
+  return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/** "piso, Área externa ,, piso" → ["piso", "área externa"]. */
+export function parseTagsInput(value: string): string[] {
+  const tags = value
+    .split(',')
+    .map((tag) => tag.trim().toLowerCase())
+    .filter((tag) => tag.length > 0);
+  return [...new Set(tags)];
+}
