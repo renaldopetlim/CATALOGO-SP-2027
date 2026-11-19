@@ -1,11 +1,12 @@
 import { Link, NavLink } from 'react-router-dom';
+import { assetUrl } from '../../lib/assets';
 
 export function SiteHeader() {
   return (
     <header className="site-header">
       <div className="hd">
         <Link to="/" className="hd-brand" aria-label="Distribuidora São Paulo — página inicial">
-          <img src="/assets/logo.png" alt="Distribuidora São Paulo" width={146} height={56} />
+          <img src={assetUrl('assets/logo.png')} alt="Distribuidora São Paulo" width={146} height={56} />
           <div>
             <b>CATÁLOGO 2027</b>
             <span>Distribuidora São Paulo · O Atacado da Construção</span>

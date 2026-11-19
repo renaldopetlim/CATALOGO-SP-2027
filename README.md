@@ -11,6 +11,7 @@ para gerenciar categorias, itens e imagens sem editar código.
 | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) | Pastas, banco, segurança (RLS) e fluxo de dados |
 | [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) | Cores, tipografia, componentes |
 | [docs/CHECKLIST-TESTES.md](docs/CHECKLIST-TESTES.md) | Roteiro de teste ponta a ponta |
+| [docs/DEPLOY-GITHUB-PAGES.md](docs/DEPLOY-GITHUB-PAGES.md) | Deploy automático no GitHub Pages |
 | [supabase/migrations/](supabase/migrations/) | Script SQL do banco |
 
 ---
@@ -80,7 +81,7 @@ Inicie o servidor de desenvolvimento:
 npm run dev
 ```
 
-Abra `http://localhost:5173`. O painel fica em `http://localhost:5173/admin`.
+Abra `http://localhost:5173`. O painel fica em `http://localhost:5173/#/admin`.
 
 > O `.env.local` já está no `.gitignore`. Depois de alterar esse arquivo, reinicie o `npm run dev`.
 
@@ -130,15 +131,21 @@ lista pode estar desatualizada até voltar.
 - **Conferir no painel do Supabase:** em *Database → Publications → supabase_realtime*, apenas
   `catalog_sync` deve estar marcada.
 
-## 3. Publicar (deploy)
+## 3. Publicar (deploy no GitHub Pages)
 
-Qualquer hospedagem de site estático serve (Vercel, Netlify, Cloudflare Pages…):
+O deploy é automático: cada push na `main` publica o site em
+**https://renaldopetlim.github.io/CATALOGO-SP-2027/** pelo workflow `.github/workflows/deploy.yml`.
 
-- **Comando de build:** `npm run build` · **Pasta publicada:** `dist`
-- **Variáveis de ambiente:** `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (as mesmas do `.env.local`)
-- **Rotas:** o app usa rotas como `/catalogo` e `/admin`. `vercel.json` e `public/_redirects` (Netlify) já
-  redirecionam tudo para o `index.html`. Em outra hospedagem, configure o equivalente ("SPA fallback").
-- No Supabase, em *Authentication → URL Configuration*, ajuste a **Site URL** para o endereço publicado.
+Configuração única, com o passo a passo completo em **[docs/DEPLOY-GITHUB-PAGES.md](docs/DEPLOY-GITHUB-PAGES.md)**:
+
+1. **Secrets:** em *Settings → Secrets and variables → Actions*, cadastre `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+2. **Pages:** em *Settings → Pages → Source*, escolha **GitHub Actions**.
+3. **Supabase:** em *Authentication → URL Configuration*, preencha a **Site URL**
+   `https://renaldopetlim.github.io/CATALOGO-SP-2027/` e a **Redirect URL**
+   `https://renaldopetlim.github.io/CATALOGO-SP-2027/**`.
+
+As rotas usam `#`, como em `…/CATALOGO-SP-2027/#/admin`, para que o F5 nunca dê 404 no GitHub Pages.
+Para hospedar em outro lugar, gere o build com `BASE_PATH=/`.
 
 ## Problemas comuns
 
@@ -149,7 +156,7 @@ Qualquer hospedagem de site estático serve (Vercel, Netlify, Cloudflare Pages�
 | Login ok, mas "Acesso restrito" | Usuário não está em `admin_users` (passo 1.4) |
 | "Você não tem permissão…" ao salvar | Mesmo caso acima, ou sessão expirada: saia e entre de novo |
 | Upload recusado | Arquivo acima de 5 MB ou fora de JPEG/PNG/WebP/AVIF |
-| 404 ao recarregar `/catalogo` em produção | Falta o "SPA fallback" na hospedagem |
+| Página em branco no GitHub Pages | `REPO_BASE` do `vite.config.ts` diferente do nome do repositório; veja o [guia de deploy](docs/DEPLOY-GITHUB-PAGES.md) |
 | Indicador "ao vivo" não aparece | Migração de Realtime não executada, ou WebSocket bloqueado pela rede |
 
 ---

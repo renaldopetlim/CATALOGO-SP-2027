@@ -70,5 +70,9 @@ export const supabase: SupabaseClient<Database> = createClient<Database>(env.url
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // PKCE devolve `?code=` na URL (e não tokens após o `#`), o que não
+    // conflita com o HashRouter caso links de e-mail (ex.: recuperar senha)
+    // sejam usados no futuro.
+    flowType: 'pkce',
   },
 });

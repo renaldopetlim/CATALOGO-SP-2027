@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { assetUrl, SITE_ROOT_URL } from '../../lib/assets';
 
 export function AdminLayout() {
   const { user, signOut } = useAuth();
@@ -21,7 +22,7 @@ export function AdminLayout() {
       <header className="site-header">
         <div className="hd">
           <Link to="/admin" className="hd-brand" aria-label="Painel administrativo">
-            <img src="/assets/logo.png" alt="Distribuidora São Paulo" width={146} height={56} />
+            <img src={assetUrl('assets/logo.png')} alt="Distribuidora São Paulo" width={146} height={56} />
             <div>
               <b>PAINEL DO CATÁLOGO</b>
               <span>{user?.email}</span>
@@ -32,7 +33,7 @@ export function AdminLayout() {
               ITENS
             </NavLink>
             <NavLink to="/admin/categorias">CATEGORIAS</NavLink>
-            <a href="/" target="_blank" rel="noopener">
+            <a href={SITE_ROOT_URL} target="_blank" rel="noopener">
               VITRINE ↗
             </a>
             <button type="button" className="hd-btn" onClick={() => void handleSignOut()} disabled={signingOut}>
