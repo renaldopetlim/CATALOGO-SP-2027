@@ -58,9 +58,9 @@ a {
 }
 
 .hd {
-  max-width: var(--container);
+  max-width: var(--container-wide);
   margin: 0 auto;
-  padding: 14px var(--gutter);
+  padding: 14px var(--gutter-wide);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -128,6 +128,17 @@ main {
   max-width: var(--container);
   margin: 0 auto;
   padding: var(--gutter);
+}
+
+/* Vitrine pública: mesma largura e alinhamento do cabeçalho e do rodapé */
+.site-main {
+  max-width: var(--container-wide);
+  padding: clamp(16px, 1.6vw, 24px) var(--gutter-wide);
+}
+
+/* Campo de busca não estica até a largura total da tela */
+.site-main .search {
+  max-width: 720px;
 }
 
 h1 {
@@ -356,10 +367,32 @@ button:disabled {
 /* ==========================================================================
    6. Grade e card de produto
    ========================================================================== */
+/* 2 colunas (celular) → 3 (tablet) → 4 (desktop) → 5 (monitores largos) */
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px;
+  }
 }
 
 .item-card {
@@ -488,8 +521,14 @@ button:disabled {
    ========================================================================== */
 .cat-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 12px;
+}
+
+@media (min-width: 1024px) {
+  .cat-grid {
+    gap: 16px;
+  }
 }
 
 .cat-card {
@@ -729,10 +768,11 @@ button:disabled {
    ========================================================================== */
 .site-footer {
   width: 100%;
-  max-width: var(--container);
+  max-width: var(--container-wide);
   margin: 24px auto 16px;
-  padding: 20px var(--gutter) 0;
-  border-top: 1px solid var(--line);
+  padding: 20px var(--gutter-wide) 0;
+  /* filete superior só na largura do conteúdo (alinhado ao cabeçalho e à grade) */
+  background: linear-gradient(var(--line), var(--line)) center top / calc(100% - 2 * var(--gutter-wide)) 1px no-repeat;
   text-align: center;
   font-size: 0.8rem;
   color: var(--mut);
@@ -1035,11 +1075,6 @@ input[type="file"] {
 
   .hd-brand div {
     display: none;
-  }
-
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
   }
 
   .cat-grid,

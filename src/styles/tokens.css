@@ -23,8 +23,10 @@
   --lh: 1.4;
 
   /* Layout */
-  --container: 760px;
+  --container: 760px; /* blocos estreitos: login, telas de estado */
   --gutter: 16px;
+  --container-wide: 1600px; /* vitrine pública: cabeçalho, conteúdo e rodapé */
+  --gutter-wide: clamp(16px, 2vw, 32px); /* 16px no celular → 24–32px no desktop */
 
   /* Raios */
   --r-tag: 6px;
