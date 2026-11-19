@@ -8,7 +8,8 @@ import { useCatalogItems } from '../hooks/useCatalogItems';
 import { useCategories } from '../hooks/useCategories';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 
-const FEATURED_LIMIT = 6;
+// 12 fecha linhas completas com 2, 3 e 4 colunas (celular, tablet e desktop).
+const FEATURED_LIMIT = 12;
 
 export function HomePage() {
   useDocumentTitle(null);
