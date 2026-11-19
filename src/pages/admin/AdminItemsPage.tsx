@@ -1,11 +1,13 @@
 import { useCallback, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ItemForm } from '../../components/admin/ItemForm';
+import { AdminTopbar } from '../../components/admin/AdminTopbar';
+import { DateCell } from '../../components/admin/DateCell';
+import { ItemForm, type ItemFormMode } from '../../components/admin/ItemForm';
 import { ItemImage } from '../../components/catalog/ItemImage';
 import { SearchBar } from '../../components/catalog/SearchBar';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
-import { LiveIndicator } from '../../components/ui/LiveIndicator';
 import { EmptyState, ErrorState } from '../../components/ui/StateMessage';
+import { Switch } from '../../components/ui/Switch';
 import { Toast } from '../../components/ui/Toast';
 import { useAdminCategories } from '../../hooks/useAdminCategories';
 import { useCatalogItems } from '../../hooks/useCatalogItems';
@@ -17,7 +19,7 @@ import { deleteCatalogItem, setItemActive, setItemFeatured } from '../../service
 import type { CatalogItemWithCategory, ItemStatusFilter } from '../../types/catalog';
 
 const STATUS_OPTIONS: Array<{ value: ItemStatusFilter; label: string }> = [
-  { value: 'all', label: 'Todos' },
+  { value: 'all', label: 'Todos os status' },
   { value: 'active', label: 'Ativos' },
   { value: 'inactive', label: 'Inativos' },
 ];
@@ -26,7 +28,7 @@ function isStatus(value: string | null): value is ItemStatusFilter {
   return value === 'all' || value === 'active' || value === 'inactive';
 }
 
-type Editing = { mode: 'create' } | { mode: 'edit'; item: CatalogItemWithCategory };
+type Editing = { mode: ItemFormMode; item: CatalogItemWithCategory | null };
 
 export function AdminItemsPage() {
   useDocumentTitle('Admin · Itens');
@@ -58,7 +60,7 @@ export function AdminItemsPage() {
   const categories = useAdminCategories();
   const items = useCatalogItems(
     { search, categoryId, status, featured: featuredOnly, sort: 'recent' },
-    { scope: 'admin', pageSize: 30, refetchOnFocus: false, live: true },
+    { scope: 'admin', pageSize: 50, refetchOnFocus: false, live: true },
   );
   const { toast, show, dismiss } = useToast();
 
@@ -111,44 +113,40 @@ export function AdminItemsPage() {
   };
 
   const hasFilters = Boolean(search || categoryId || status !== 'all' || featuredOnly);
+  const noCategories = categories.status === 'success' && categories.categories.length === 0;
 
   return (
     <>
-      <div className="page-head">
-        <div>
-          <h1>Itens do catálogo</h1>
-          <p className="sub">Crie, edite, destaque ou oculte itens. As alterações aparecem na vitrine imediatamente.</p>
-        </div>
-        <button
-          type="button"
-          className="pri"
-          onClick={() => setEditing({ mode: 'create' })}
-          disabled={categories.status === 'success' && categories.categories.length === 0}
-        >
-          + Novo item
-        </button>
-      </div>
-
-      {categories.status === 'success' && categories.categories.length === 0 && (
-        <EmptyState
-          title="Crie uma categoria primeiro"
-          action={
-            <Link to="/admin/categorias" className="chip">
-              Ir para categorias
-            </Link>
-          }
-        >
-          Todo item precisa pertencer a uma categoria.
-        </EmptyState>
-      )}
-
-      <div className="card filters">
-        <SearchBar value={search} onSearch={setSearch} label="Buscar" placeholder="Título, SKU, descrição ou tag" />
-        <div className="g">
-          <div>
-            <label htmlFor="f-cat">Categoria</label>
+      <AdminTopbar
+        title="Itens do catálogo"
+        meta={
+          items.status === 'success' ? (
+            <>
+              {items.total === 1 ? '1 item' : `${items.total.toLocaleString('pt-BR')} itens`}
+              {items.items.length < items.total && ` · exibindo ${items.items.length}`}
+              {hasFilters && (
+                <>
+                  {' · '}
+                  <Link to="/admin" replace className="tb-link">
+                    Limpar filtros
+                  </Link>
+                </>
+              )}
+            </>
+          ) : (
+            'Carregando…'
+          )
+        }
+        tools={
+          <>
+            <div className="tb-search">
+              <SearchBar value={search} onSearch={setSearch} label="Buscar itens" placeholder="Buscar por título, SKU, descrição ou tag" hideLabel />
+            </div>
+            <label className="sr-only" htmlFor="f-cat">
+              Categoria
+            </label>
             <select id="f-cat" value={categoryId ?? ''} onChange={(e) => updateParam('categoria', e.target.value || null)}>
-              <option value="">Todas</option>
+              <option value="">Todas as categorias</option>
               {categories.categories.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
@@ -156,9 +154,9 @@ export function AdminItemsPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label htmlFor="f-status">Situação</label>
+            <label className="sr-only" htmlFor="f-status">
+              Status
+            </label>
             <select id="f-status" value={status} onChange={(e) => updateParam('status', e.target.value === 'all' ? null : e.target.value)}>
               {STATUS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -166,125 +164,182 @@ export function AdminItemsPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="full">
-            <label className="check">
-              <input type="checkbox" checked={featuredOnly} onChange={(e) => updateParam('destaque', e.target.checked ? '1' : null)} />
-              Somente destaques
-            </label>
-          </div>
-        </div>
-      </div>
-
-      {items.status === 'success' && (
-        <p className="result-info">
-          {items.total === 1 ? '1 item' : `${items.total.toLocaleString('pt-BR')} itens`}
-          <LiveIndicator showOffline />
-          {hasFilters && (
-            <>
-              {' · '}
-              <Link to="/admin" replace className="section-link">
-                Limpar filtros
-              </Link>
-            </>
-          )}
-        </p>
-      )}
-
-      {items.status === 'loading' && (
-        <p className="state" role="status">
-          Carregando itens…
-        </p>
-      )}
-      {items.status === 'error' && <ErrorState error={items.error} onRetry={items.reload} />}
-      {items.status === 'success' && items.items.length === 0 && (
-        <EmptyState title={hasFilters ? 'Nenhum item encontrado com esses filtros' : 'Nenhum item cadastrado'}>
-          {hasFilters ? 'Ajuste a busca ou limpe os filtros.' : 'Clique em “+ Novo item” para começar.'}
-        </EmptyState>
-      )}
-
-      {items.status === 'success' && items.items.length > 0 && (
-        <ul className="adm-list">
-          {items.items.map((item) => {
-            const busy = busyIds.has(item.id);
-            return (
-              <li key={item.id} className={`adm-row${item.is_active ? '' : ' is-off'}`}>
-                <div className="thumb">
-                  <ItemImage src={item.image_url} alt="" />
-                </div>
-                <div className="adm-info">
-                  <b>{item.title}</b>
-                  <span>
-                    {item.sku ? `SKU ${item.sku} · ` : ''}
-                    {item.category.name}
-                    {item.category.is_active ? '' : ' (categoria inativa)'} · {formatPrice(item.price)}
-                  </span>
-                  <span className="adm-badges">
-                    {!item.is_active && <span className="badge off">Inativo</span>}
-                    {item.is_featured && <span className="badge acc">Destaque</span>}
-                  </span>
-                </div>
-                <div className="row-actions">
-                  <button
-                    type="button"
-                    className="sec btn-sm"
-                    disabled={busy}
-                    aria-pressed={item.is_featured}
-                    onClick={() =>
-                      void runRowAction(
-                        item,
-                        () => setItemFeatured(item.id, !item.is_featured),
-                        item.is_featured ? 'Destaque removido.' : 'Item marcado como destaque.',
-                      )
-                    }
-                  >
-                    {item.is_featured ? '★ Destaque' : '☆ Destacar'}
-                  </button>
-                  <button
-                    type="button"
-                    className="sec btn-sm"
-                    disabled={busy}
-                    onClick={() =>
-                      void runRowAction(
-                        item,
-                        () => setItemActive(item.id, !item.is_active),
-                        item.is_active ? 'Item inativado (oculto da vitrine).' : 'Item ativado (visível na vitrine).',
-                      )
-                    }
-                  >
-                    {item.is_active ? 'Inativar' : 'Ativar'}
-                  </button>
-                  <button type="button" className="sec btn-sm" disabled={busy} onClick={() => setEditing({ mode: 'edit', item })}>
-                    Editar
-                  </button>
-                  <button type="button" className="sec btn-sm danger-text" disabled={busy} onClick={() => setDeleting(item)}>
-                    Excluir
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-
-      {items.hasMore && (
-        <div className="load-more">
-          <button type="button" className="sec" onClick={items.loadMore} disabled={items.loadingMore}>
-            {items.loadingMore ? 'Carregando…' : `Carregar mais (${(items.total - items.items.length).toLocaleString('pt-BR')} restantes)`}
+            <button
+              type="button"
+              className="tb-toggle"
+              aria-pressed={featuredOnly}
+              onClick={() => updateParam('destaque', featuredOnly ? null : '1')}
+            >
+              ★ Destaques
+            </button>
+          </>
+        }
+        action={
+          <button type="button" className="pri" onClick={() => setEditing({ mode: 'create', item: null })} disabled={noCategories}>
+            + Novo item
           </button>
-        </div>
-      )}
-      {items.loadMoreError && <ErrorState error={items.loadMoreError} title="Não foi possível carregar mais" onRetry={items.loadMore} />}
+        }
+      />
+
+      <div className="admin-content">
+        {noCategories && (
+          <div className="admin-pad">
+            <EmptyState
+              title="Crie uma categoria primeiro"
+              action={
+                <Link to="/admin/categorias" className="chip">
+                  Ir para categorias
+                </Link>
+              }
+            >
+              Todo item precisa pertencer a uma categoria.
+            </EmptyState>
+          </div>
+        )}
+
+        {items.status === 'loading' && (
+          <p className="admin-pad state" role="status">
+            Carregando itens…
+          </p>
+        )}
+        {items.status === 'error' && (
+          <div className="admin-pad">
+            <ErrorState error={items.error} onRetry={items.reload} />
+          </div>
+        )}
+        {items.status === 'success' && items.items.length === 0 && !noCategories && (
+          <div className="admin-pad">
+            <EmptyState title={hasFilters ? 'Nenhum item encontrado com esses filtros' : 'Nenhum item cadastrado'}>
+              {hasFilters ? 'Ajuste a busca ou limpe os filtros.' : 'Clique em “+ Novo item” para começar.'}
+            </EmptyState>
+          </div>
+        )}
+
+        {items.status === 'success' && items.items.length > 0 && (
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th scope="col" className="col-thumb">
+                  <span className="sr-only">Imagem</span>
+                </th>
+                <th scope="col">Item</th>
+                <th scope="col">Categoria</th>
+                <th scope="col" className="col-num">
+                  Preço
+                </th>
+                <th scope="col">Status</th>
+                <th scope="col">Destaque</th>
+                <th scope="col">Atualizado em</th>
+                <th scope="col" className="col-actions">
+                  Ações
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.items.map((item) => {
+                const busy = busyIds.has(item.id);
+                return (
+                  <tr key={item.id} className={item.is_active ? undefined : 'is-off'} aria-busy={busy || undefined}>
+                    <td className="col-thumb">
+                      <div className="thumb">
+                        <ItemImage src={item.image_url} alt="" />
+                      </div>
+                    </td>
+                    <td className="col-title">
+                      <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', item })}>
+                        {item.title}
+                      </button>
+                      <span className="cell-sub">{item.sku ? `SKU ${item.sku}` : 'Sem SKU'}</span>
+                    </td>
+                    <td className="col-cat">
+                      <span className={`badge${item.category.is_active ? '' : ' off'}`} title={item.category.is_active ? undefined : 'Categoria inativa'}>
+                        {item.category.name}
+                      </span>
+                    </td>
+                    <td className={`col-num${item.price === null ? ' mut' : ''}`}>{formatPrice(item.price)}</td>
+                    <td className="col-switch">
+                      <Switch
+                        checked={item.is_active}
+                        text={item.is_active ? 'Ativo' : 'Inativo'}
+                        label={`${item.is_active ? 'Inativar' : 'Ativar'} “${item.title}”`}
+                        disabled={busy}
+                        onChange={(next) =>
+                          void runRowAction(
+                            item,
+                            () => setItemActive(item.id, next),
+                            next ? 'Item ativado (visível na vitrine).' : 'Item inativado (oculto da vitrine).',
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="col-switch">
+                      <Switch
+                        tone="featured"
+                        checked={item.is_featured}
+                        text={item.is_featured ? 'Sim' : 'Não'}
+                        label={`${item.is_featured ? 'Remover destaque de' : 'Destacar'} “${item.title}”`}
+                        disabled={busy}
+                        onChange={(next) =>
+                          void runRowAction(
+                            item,
+                            () => setItemFeatured(item.id, next),
+                            next ? 'Item marcado como destaque.' : 'Destaque removido.',
+                          )
+                        }
+                      />
+                    </td>
+                    <td className="col-date">
+                      <DateCell iso={item.updated_at} />
+                    </td>
+                    <td className="col-actions">
+                      <div className="row-actions">
+                        <button type="button" className="act" disabled={busy} onClick={() => setEditing({ mode: 'edit', item })}>
+                          Editar
+                        </button>
+                        <button type="button" className="act" disabled={busy} onClick={() => setEditing({ mode: 'duplicate', item })}>
+                          Duplicar
+                        </button>
+                        <button type="button" className="act danger-text" disabled={busy} onClick={() => setDeleting(item)}>
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {items.loadMoreError && (
+          <div className="admin-pad">
+            <ErrorState error={items.loadMoreError} title="Não foi possível carregar mais" onRetry={items.loadMore} />
+          </div>
+        )}
+        {items.hasMore && !items.loadMoreError && (
+          <div className="admin-pad table-more">
+            <button type="button" className="sec" onClick={items.loadMore} disabled={items.loadingMore}>
+              {items.loadingMore ? 'Carregando…' : `Carregar mais (${(items.total - items.items.length).toLocaleString('pt-BR')} restantes)`}
+            </button>
+          </div>
+        )}
+      </div>
 
       {editing && (
         <ItemForm
-          item={editing.mode === 'edit' ? editing.item : null}
+          mode={editing.mode}
+          item={editing.item}
           categories={categories.categories}
           defaultCategoryId={categoryId}
           onCancel={() => setEditing(null)}
           onSaved={(result, mode) => {
             setEditing(null);
-            const base = mode === 'created' ? `“${result.item.title}” criado.` : `“${result.item.title}” atualizado.`;
+            const base =
+              mode === 'edit'
+                ? `“${result.item.title}” atualizado.`
+                : mode === 'duplicate'
+                  ? `Cópia criada como inativa: “${result.item.title}”.`
+                  : `“${result.item.title}” criado.`;
             show(result.warnings.length > 0 ? 'warn' : 'ok', [base, ...result.warnings].join(' '));
             refresh();
           }}

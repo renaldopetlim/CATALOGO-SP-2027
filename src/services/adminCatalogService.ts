@@ -1,7 +1,7 @@
 import { toServiceError } from '../lib/errors';
 import type { CatalogItemWithCategory, CreateCatalogItemInput } from '../types/catalog';
 import { createCatalogItem, updateCatalogItem } from './catalogService';
-import { deleteCatalogImage, getStoragePathFromUrl, uploadCatalogImage } from './storageService';
+import { copyCatalogImage, deleteCatalogImage, getStoragePathFromUrl, uploadCatalogImage } from './storageService';
 
 export type SaveItemParams = {
   /** Ausente = criar; presente = editar. */
@@ -11,6 +11,11 @@ export type SaveItemParams = {
   newImageFile?: File | null;
   /** `image_url` antes da edição, para remover a imagem antiga do Storage. */
   previousImageUrl?: string | null;
+  /**
+   * Duplicação: URL da imagem do item original. Se o novo item mantiver essa
+   * mesma imagem do bucket, ela é copiada para um arquivo próprio.
+   */
+  copyImageFromUrl?: string | null;
 };
 
 export type SaveItemResult = {
@@ -31,6 +36,7 @@ export async function saveCatalogItem({
   input,
   newImageFile = null,
   previousImageUrl = null,
+  copyImageFromUrl = null,
 }: SaveItemParams): Promise<SaveItemResult> {
   const warnings: string[] = [];
   let uploadedUrl: string | null = null;
@@ -38,6 +44,13 @@ export async function saveCatalogItem({
   if (newImageFile) {
     const uploaded = await uploadCatalogImage(newImageFile);
     uploadedUrl = uploaded.publicUrl;
+  } else if (
+    copyImageFromUrl &&
+    input.image_url === copyImageFromUrl &&
+    getStoragePathFromUrl(copyImageFromUrl)
+  ) {
+    const copied = await copyCatalogImage(copyImageFromUrl);
+    uploadedUrl = copied.publicUrl;
   }
 
   const payload: CreateCatalogItemInput = uploadedUrl ? { ...input, image_url: uploadedUrl } : input;

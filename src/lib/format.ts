@@ -91,3 +91,17 @@ export function parseTagsInput(value: string): string[] {
     .filter((tag) => tag.length > 0);
   return [...new Set(tags)];
 }
+
+const DATE_TIME = new Intl.DateTimeFormat('pt-BR', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
+/** ISO → "19/11/2026 02:53" (fuso do navegador). */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '' : DATE_TIME.format(date).replace(',', '');
+}
