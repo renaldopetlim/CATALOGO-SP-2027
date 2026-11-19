@@ -1,20 +1,23 @@
 import { useId, useState, type FormEvent } from 'react';
 import { isServiceError } from '../../lib/errors';
-import { isHttpUrl, maskPriceInput, parsePriceInput, parseTagsInput, priceToInput } from '../../lib/format';
+import { isHttpUrl, parseTagsInput } from '../../lib/format';
 import { saveCatalogItem, type SaveItemResult } from '../../services/adminCatalogService';
-import type { Category, CatalogItemWithCategory } from '../../types/catalog';
+import { BADGE_LABELS, BADGES, isCatalogBadge, type CatalogBadge, type Category, type CatalogItemWithCategory } from '../../types/catalog';
 import { Drawer } from '../ui/Drawer';
+import { CodesEditor } from './CodesEditor';
+import { newCodeRow, newSpecRow, type CodeRow, type SpecRow } from './editorRows';
 import { ImageInput, type ImageValue } from './ImageInput';
+import { SpecificationsEditor } from './SpecificationsEditor';
 
 export type ItemFormMode = 'create' | 'edit' | 'duplicate';
 
 type ItemFormProps = {
   mode: ItemFormMode;
-  /** Item a editar ou a duplicar (ausente ao criar). */
+  /** Produto a editar ou a duplicar (ausente ao criar). */
   item?: CatalogItemWithCategory | null;
   /** Todas as categorias (inclusive inativas). */
   categories: Category[];
-  /** Categoria pré-selecionada para novos itens. */
+  /** Categoria pré-selecionada para novos produtos. */
   defaultCategoryId?: string | null;
   onSaved: (result: SaveItemResult, mode: ItemFormMode) => void;
   onCancel: () => void;
@@ -22,28 +25,23 @@ type ItemFormProps = {
 
 type FormState = {
   title: string;
-  sku: string;
+  brand: string;
   category_id: string;
-  price: string;
-  short_description: string;
-  detailed_description: string;
+  badge: CatalogBadge | '';
   tags: string;
   is_featured: boolean;
   is_active: boolean;
 };
 
-type FieldErrors = Partial<Record<keyof FormState | 'image', string>>;
+type FieldErrors = Partial<Record<'title' | 'brand' | 'category_id' | 'image' | 'codes', string>>;
 
 function initialState(mode: ItemFormMode, item: CatalogItemWithCategory | null | undefined, defaultCategoryId: string | null): FormState {
   const duplicate = mode === 'duplicate';
   return {
     title: item ? (duplicate ? `${item.title} (cópia)` : item.title) : '',
-    // SKU é único: a cópia começa sem SKU.
-    sku: item && !duplicate ? (item.sku ?? '') : '',
+    brand: item?.brand ?? '',
     category_id: item?.category_id ?? defaultCategoryId ?? '',
-    price: priceToInput(item?.price ?? null),
-    short_description: item?.short_description ?? '',
-    detailed_description: item?.detailed_description ?? '',
+    badge: item?.badge ?? '',
     tags: item?.tags.join(', ') ?? '',
     // A cópia nasce inativa e sem destaque, para revisão antes de aparecer na vitrine.
     is_featured: duplicate ? false : (item?.is_featured ?? false),
@@ -51,43 +49,90 @@ function initialState(mode: ItemFormMode, item: CatalogItemWithCategory | null |
   };
 }
 
-function validate(form: FormState, image: ImageValue): FieldErrors {
-  const errors: FieldErrors = {};
-  if (!form.title.trim()) errors.title = 'Campo obrigatório';
-  else if (form.title.trim().length > 200) errors.title = 'Máximo de 200 caracteres';
-  if (!form.category_id) errors.category_id = 'Selecione uma categoria';
-  if (image.mode === 'url' && image.url && !isHttpUrl(image.url.trim())) {
-    errors.image = 'Informe uma URL começando com http:// ou https://';
-  }
+function initialCodes(mode: ItemFormMode, item: CatalogItemWithCategory | null | undefined): CodeRow[] {
+  if (!item || item.codes.length === 0) return [newCodeRow()];
+  return item.codes.map((code) =>
+    mode === 'duplicate'
+      ? // Códigos são únicos: a cópia mantém descrição e embalagem, com o código em branco.
+        newCodeRow({ description: code.description ?? '', packaging: code.packaging ?? '' })
+      : newCodeRow({ id: code.id, code: code.code, description: code.description ?? '', packaging: code.packaging ?? '' }),
+  );
+}
+
+/** Validação local das linhas de código: obrigatório e sem repetição no mesmo produto. */
+function validateCodes(rows: CodeRow[]): Record<number, string> {
+  const errors: Record<number, string> = {};
+  const seen = new Map<string, number>();
+  rows.forEach((row, index) => {
+    const code = row.code.trim().toUpperCase();
+    const filled = code || row.description.trim() || row.packaging.trim();
+    if (!filled && rows.length > 1) return; // linha totalmente vazia é ignorada
+    if (!code) {
+      errors[index] = 'Informe o código.';
+      return;
+    }
+    const first = seen.get(code);
+    if (first !== undefined) errors[index] = `Código repetido (linha ${first + 1}).`;
+    else seen.set(code, index);
+  });
+  return errors;
+}
+
+function validateSpecs(rows: SpecRow[]): Record<number, string> {
+  const errors: Record<number, string> = {};
+  rows.forEach((row, index) => {
+    if (row.label.trim() && !row.value.trim()) errors[index] = 'Informe o valor ou remova a linha.';
+  });
   return errors;
 }
 
 const TITLES: Record<ItemFormMode, string> = {
-  create: 'Novo item',
-  edit: 'Editar item',
-  duplicate: 'Duplicar item',
+  create: 'Novo produto',
+  edit: 'Editar produto',
+  duplicate: 'Duplicar produto',
 };
 
-/** Formulário de item em gaveta lateral (criar, editar ou duplicar). */
+/** Formulário de produto em gaveta lateral (criar, editar ou duplicar). */
 export function ItemForm({ mode, item, categories, defaultCategoryId = null, onSaved, onCancel }: ItemFormProps) {
   const formId = useId();
   const [form, setForm] = useState<FormState>(() => initialState(mode, item, defaultCategoryId));
+  const [codes, setCodes] = useState<CodeRow[]>(() => initialCodes(mode, item));
+  const [specs, setSpecs] = useState<SpecRow[]>(() => (item?.specifications ?? []).map((spec) => newSpecRow(spec)));
   const [image, setImage] = useState<ImageValue>({ mode: 'url', url: item?.image_url ?? null });
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [codeErrors, setCodeErrors] = useState<Record<number, string>>({});
+  const [specErrors, setSpecErrors] = useState<Record<number, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const set = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
+    setSubmitError(null);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const fieldErrors = validate(form, image);
+    const fieldErrors: FieldErrors = {};
+    if (!form.title.trim()) fieldErrors.title = 'Campo obrigatório';
+    else if (form.title.trim().length > 200) fieldErrors.title = 'Máximo de 200 caracteres';
+    if (form.brand.trim().length > 120) fieldErrors.brand = 'Máximo de 120 caracteres';
+    if (!form.category_id) fieldErrors.category_id = 'Selecione uma categoria';
+    if (image.mode === 'url' && image.url && !isHttpUrl(image.url.trim())) {
+      fieldErrors.image = 'Informe uma URL começando com http:// ou https://';
+    }
+    const nextCodeErrors = validateCodes(codes);
+    const nextSpecErrors = validateSpecs(specs);
+    if (Object.keys(nextCodeErrors).length > 0) fieldErrors.codes = 'Revise os códigos destacados.';
+
     setErrors(fieldErrors);
+    setCodeErrors(nextCodeErrors);
+    setSpecErrors(nextSpecErrors);
     setSubmitError(null);
-    if (Object.keys(fieldErrors).length > 0) return;
+    if (Object.keys(fieldErrors).length > 0 || Object.keys(nextSpecErrors).length > 0) {
+      setSubmitError('Revise os campos destacados.');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -95,38 +140,39 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, onS
         id: mode === 'edit' ? item?.id : undefined,
         input: {
           title: form.title,
-          sku: form.sku,
+          brand: form.brand,
           category_id: form.category_id,
-          price: parsePriceInput(form.price),
-          short_description: form.short_description,
-          detailed_description: form.detailed_description,
+          badge: form.badge || null,
           tags: parseTagsInput(form.tags),
+          specifications: specs.map(({ label, value }) => ({ label, value })),
+          codes: codes.map(({ id, code, description, packaging }) => ({ ...(id ? { id } : {}), code, description, packaging })),
           is_featured: form.is_featured,
           is_active: form.is_active,
           image_url: image.mode === 'url' ? (image.url?.trim() ?? null) : null,
         },
         newImageFile: image.mode === 'file' ? image.file : null,
-        // Só na edição a imagem anterior pertence a este item e pode ser removida.
+        // Só na edição a imagem anterior pertence a este produto e pode ser removida.
         previousImageUrl: mode === 'edit' ? (item?.image_url ?? null) : null,
         copyImageFromUrl: mode === 'duplicate' ? (item?.image_url ?? null) : null,
       });
       onSaved(result, mode);
     } catch (err) {
       const message = isServiceError(err) ? err.message : 'Não foi possível salvar. Tente novamente.';
-      if (isServiceError(err) && err.kind === 'conflict' && /SKU/i.test(message)) {
-        setErrors((prev) => ({ ...prev, sku: message }));
-      }
+      if (isServiceError(err) && err.kind === 'conflict') setErrors((prev) => ({ ...prev, codes: message }));
       setSubmitError(message);
       setSaving(false);
     }
   };
 
   const fieldClass = (field: keyof FieldErrors) => (errors[field] ? 'bad' : undefined);
+  const firstCode = item?.codes[0]?.code;
   const subtitle =
     mode === 'edit' && item
-      ? [item.sku ? `SKU ${item.sku}` : null, item.category.name].filter(Boolean).join(' · ')
+      ? [firstCode ? `Cód. ${firstCode}${item.codes.length > 1 ? ` +${item.codes.length - 1}` : ''}` : null, item.category.name]
+          .filter(Boolean)
+          .join(' · ')
       : mode === 'duplicate' && item
-        ? `Cópia de “${item.title}”, criada inativa para revisão`
+        ? `Cópia de “${item.title}”, criada inativa. Informe códigos novos.`
         : undefined;
 
   const submitLabel = saving
@@ -137,7 +183,7 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, onS
       ? 'Salvar alterações'
       : mode === 'duplicate'
         ? 'Criar cópia'
-        : 'Criar item';
+        : 'Criar produto';
 
   return (
     <Drawer
@@ -163,17 +209,17 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, onS
     >
       <form id={formId} onSubmit={(event) => void handleSubmit(event)} noValidate>
         <fieldset disabled={saving}>
-          <legend>Identificação</legend>
+          <legend>Produto</legend>
           <div className="g">
             <div>
-              <label htmlFor="item-title">Título *</label>
+              <label htmlFor="item-title">Título do produto *</label>
               <input id="item-title" value={form.title} maxLength={200} onChange={(e) => set('title', e.target.value)} className={fieldClass('title')} />
               {errors.title && <div className="msg">{errors.title}</div>}
             </div>
             <div>
-              <label htmlFor="item-sku">SKU / Código</label>
-              <input id="item-sku" value={form.sku} onChange={(e) => set('sku', e.target.value.toUpperCase())} className={fieldClass('sku')} />
-              {errors.sku && <div className="msg">{errors.sku}</div>}
+              <label htmlFor="item-brand">Marca</label>
+              <input id="item-brand" value={form.brand} maxLength={120} placeholder="Ex.: Ciser, Tigre, Portobello" onChange={(e) => set('brand', e.target.value)} className={fieldClass('brand')} />
+              {errors.brand && <div className="msg">{errors.brand}</div>}
             </div>
             <div>
               <label htmlFor="item-category">Categoria *</label>
@@ -189,24 +235,41 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, onS
               {errors.category_id && <div className="msg">{errors.category_id}</div>}
             </div>
             <div>
-              <label htmlFor="item-price">Preço (R$)</label>
-              <input
-                id="item-price"
-                inputMode="numeric"
-                placeholder="Vazio = sob consulta"
-                value={form.price}
-                onChange={(e) => set('price', maskPriceInput(e.target.value))}
-              />
-            </div>
-            <div className="full">
-              <label htmlFor="item-tags">Tags (separadas por vírgula)</label>
-              <input id="item-tags" placeholder="piso, área externa" value={form.tags} onChange={(e) => set('tags', e.target.value)} />
+              <label htmlFor="item-badge">Selo (opcional)</label>
+              <select id="item-badge" value={form.badge} onChange={(e) => set('badge', isCatalogBadge(e.target.value) ? e.target.value : '')}>
+                <option value="">Nenhum</option>
+                {BADGES.map((badge) => (
+                  <option key={badge} value={badge}>
+                    {BADGE_LABELS[badge]}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </fieldset>
 
         <fieldset disabled={saving}>
-          <legend>Imagem e descrição</legend>
+          <legend>Códigos, descrição e embalagem</legend>
+          <p className="hint fieldset-hint">
+            Um produto pode ter vários códigos (tamanho, bitola, cor, voltagem…). Cada código é único no catálogo e também
+            é encontrado pela busca.
+          </p>
+          <CodesEditor
+            rows={codes}
+            onChange={(next) => {
+              setCodes(next);
+              setCodeErrors({});
+              setSubmitError(null);
+              setErrors((prev) => ({ ...prev, codes: undefined }));
+            }}
+            errors={codeErrors}
+            disabled={saving}
+          />
+          {errors.codes && <div className="msg">{errors.codes}</div>}
+        </fieldset>
+
+        <fieldset disabled={saving}>
+          <legend>Imagem e busca</legend>
           <div className="g">
             <div>
               <ImageInput
@@ -219,17 +282,32 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, onS
                 error={errors.image ?? null}
               />
             </div>
-            <div className="desc-col">
-              <div>
-                <label htmlFor="item-short">Descrição curta</label>
-                <input id="item-short" value={form.short_description} onChange={(e) => set('short_description', e.target.value)} />
-              </div>
-              <div>
-                <label htmlFor="item-detail">Descrição detalhada</label>
-                <textarea id="item-detail" rows={8} value={form.detailed_description} onChange={(e) => set('detailed_description', e.target.value)} />
-              </div>
+            <div>
+              <label htmlFor="item-tags">Tags de busca</label>
+              <textarea
+                id="item-tags"
+                rows={4}
+                placeholder="parafuso, fixação, inox"
+                value={form.tags}
+                onChange={(e) => set('tags', e.target.value)}
+              />
+              <p className="hint">Separadas por vírgula. Ajudam a busca e não aparecem na vitrine.</p>
             </div>
           </div>
+        </fieldset>
+
+        <fieldset disabled={saving}>
+          <legend>Especificações / Ficha técnica (opcional)</legend>
+          <SpecificationsEditor
+            rows={specs}
+            onChange={(next) => {
+              setSpecs(next);
+              setSpecErrors({});
+              setSubmitError(null);
+            }}
+            errors={specErrors}
+            disabled={saving}
+          />
         </fieldset>
 
         <fieldset disabled={saving}>

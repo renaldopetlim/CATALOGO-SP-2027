@@ -68,15 +68,23 @@ modal de detalhes, recarregar a página ou compartilhar o link preserva o estado
 | Tabela | Papel |
 |---|---|
 | `categories` | Categorias da vitrine, ordenadas por `sort_order` |
-| `catalog_items` | Itens do catálogo; `category_id` → `categories.id` (`ON DELETE RESTRICT`) |
+| `catalog_items` | Produtos: título, marca, selo, imagem, tags (ocultas), ficha técnica (`specifications` jsonb); `category_id` → `categories.id` (`ON DELETE RESTRICT`) |
+| `catalog_item_codes` | Códigos do produto (código **único no catálogo**, descrição, embalagem, ordem); `item_id` → `catalog_items.id` (`ON DELETE CASCADE`) |
 | `admin_users` | Lista de usuários do Auth com permissão de administrador |
 
 **Triggers em `catalog_items`:**
 - `set_updated_at`: atualiza `updated_at` em todo UPDATE.
-- `catalog_items_prepare`: limpa título e SKU (maiúsculo), normaliza tags (minúsculas, sem
-  duplicadas/vazias) e grava `search_text` (tudo minúsculo e sem acento).
+- `catalog_items_prepare`: limpa título e marca, normaliza tags (minúsculas, sem duplicadas/vazias)
+  e grava `search_text` (tudo minúsculo e sem acento).
+- Em `catalog_item_codes`: o código é gravado em maiúsculas, e qualquer mudança "toca" o produto,
+  recalculando a busca e disparando o aviso de tempo real.
 
-**Busca:** uma coluna `search_text` concentra título, SKU, descrições e tags, com índice
+**Gravação atômica:** o painel salva produto e códigos pela função `save_catalog_item(p_id, p_item, p_codes)`,
+numa única transação. Com `SECURITY INVOKER`, a RLS continua valendo. Códigos fora da lista são removidos e
+um código duplicado desfaz tudo.
+
+**Busca:** uma coluna `search_text` concentra título, marca, tags, ficha técnica e **todos os códigos**
+(com descrição e embalagem), com índice
 trigram (`pg_trgm`). A busca no front é um único `ILIKE '%termo%'` nessa coluna, sem
 diferenciar acentos ("ceramica" encontra "Cerâmica").
 
@@ -87,6 +95,8 @@ diferenciar acentos ("ceramica" encontra "Cerâmica").
 | Visitante (`anon`) | lê ativas | lê ativos **de categorias ativas** | abre imagens pela URL pública |
 | Usuário logado sem ser admin | igual ao visitante | igual ao visitante | igual ao visitante |
 | Admin (`admin_users`) | lê tudo, cria, edita, exclui | lê tudo, cria, edita, exclui | lista, envia, substitui, remove |
+
+`catalog_item_codes` segue o produto: o visitante só lê os códigos de produtos visíveis, e só o admin grava.
 
 "Admin" não significa só "estar logado": o usuário também precisa constar em `admin_users`.
 Isso evita que alguém crie uma conta pelo Auth e ganhe acesso de escrita. Mesmo assim,

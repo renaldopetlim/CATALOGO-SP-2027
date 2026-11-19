@@ -21,7 +21,7 @@ export function SearchBar({
   onSearch,
   live = true,
   label = 'Buscar no catálogo',
-  placeholder = 'Nome, SKU, descrição ou tag',
+  placeholder = 'Nome, marca, código ou especificação',
   submitLabel,
   hideLabel = false,
 }: SearchBarProps) {

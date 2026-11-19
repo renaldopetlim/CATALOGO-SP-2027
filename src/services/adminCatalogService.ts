@@ -1,12 +1,12 @@
 import { toServiceError } from '../lib/errors';
-import type { CatalogItemWithCategory, CreateCatalogItemInput } from '../types/catalog';
-import { createCatalogItem, updateCatalogItem } from './catalogService';
+import type { CatalogItemWithCategory, SaveCatalogItemInput } from '../types/catalog';
+import { saveCatalogItemRecord } from './catalogService';
 import { copyCatalogImage, deleteCatalogImage, getStoragePathFromUrl, uploadCatalogImage } from './storageService';
 
 export type SaveItemParams = {
   /** Ausente = criar; presente = editar. */
   id?: string;
-  input: CreateCatalogItemInput;
+  input: SaveCatalogItemInput;
   /** Arquivo novo escolhido no formulário (tem prioridade sobre `input.image_url`). */
   newImageFile?: File | null;
   /** `image_url` antes da edição, para remover a imagem antiga do Storage. */
@@ -27,7 +27,7 @@ export type SaveItemResult = {
 /**
  * Salva um item coordenando o Storage:
  * 1. envia a imagem nova (se houver);
- * 2. cria/atualiza o item;
+ * 2. cria/atualiza o produto e seus códigos (transação única no banco);
  * 3. se o passo 2 falhar, remove a imagem recém-enviada (evita arquivos órfãos);
  * 4. se der certo e a imagem mudou, remove a antiga do bucket.
  */
@@ -53,18 +53,19 @@ export async function saveCatalogItem({
     uploadedUrl = copied.publicUrl;
   }
 
-  const payload: CreateCatalogItemInput = uploadedUrl ? { ...input, image_url: uploadedUrl } : input;
+  const payload: SaveCatalogItemInput = uploadedUrl ? { ...input, image_url: uploadedUrl } : input;
 
   let item: CatalogItemWithCategory;
   try {
-    item = id ? await updateCatalogItem(id, payload) : await createCatalogItem(payload);
+    // Produto + códigos numa única transação.
+    item = await saveCatalogItemRecord(id ?? null, payload);
   } catch (error) {
     if (uploadedUrl) {
       await deleteCatalogImage(uploadedUrl).catch((cleanupError: unknown) => {
         console.warn('Falha ao remover imagem enviada após erro ao salvar o item.', cleanupError);
       });
     }
-    throw toServiceError(error, id ? 'salvar o item' : 'criar o item');
+    throw toServiceError(error, id ? 'salvar o produto' : 'criar o produto');
   }
 
   const previousPath = getStoragePathFromUrl(previousImageUrl);

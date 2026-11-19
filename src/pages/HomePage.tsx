@@ -27,7 +27,7 @@ export function HomePage() {
     <>
       <section className="hero" aria-labelledby="home-title">
         <h1 id="home-title">Catálogo 2027</h1>
-        <p className="sub">Consulte produtos, códigos e preços da Distribuidora São Paulo.</p>
+        <p className="sub">Consulte produtos, marcas e códigos da Distribuidora São Paulo.</p>
         <SearchBar value="" onSearch={goToSearch} live={false} submitLabel="Buscar no catálogo" />
       </section>
 

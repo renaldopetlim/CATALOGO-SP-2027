@@ -97,8 +97,8 @@ function fromPostgrest(error: PostgrestLikeError, context: string): ServiceError
       if (constraint.includes('slug')) {
         return new ServiceError('conflict', 'Já existe uma categoria com este slug.', opts);
       }
-      if (constraint.includes('sku')) {
-        return new ServiceError('conflict', 'Já existe um item com este SKU.', opts);
+      if (constraint.includes('code')) {
+        return new ServiceError('conflict', 'Um dos códigos informados já está cadastrado em outro produto.', opts);
       }
       return new ServiceError('conflict', 'Já existe um registro com estes dados.', opts);
     }
@@ -116,6 +116,8 @@ function fromPostgrest(error: PostgrestLikeError, context: string): ServiceError
       return new ServiceError('validation', `Dados inválidos ao ${context}. Revise os campos.`, opts);
     case '42501':
       return new ServiceError('permission', 'Você não tem permissão para esta operação. Entre com uma conta de administrador.', opts);
+    case 'P0002':
+      return new ServiceError('not_found', error.message || 'Registro não encontrado.', opts);
     case 'PGRST116':
       return new ServiceError('not_found', 'Registro não encontrado.', opts);
     case 'PGRST301':
