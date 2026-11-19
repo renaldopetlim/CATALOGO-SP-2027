@@ -69,6 +69,8 @@ modal de detalhes, recarregar a página ou compartilhar o link preserva o estado
 |---|---|
 | `categories` | Categorias da vitrine, ordenadas por `sort_order` |
 | `catalog_items` | Produtos: título, marca, selo, imagem, tags (ocultas), ficha técnica (`specifications` jsonb); `category_id` → `categories.id` (`ON DELETE RESTRICT`) |
+| `system_products` | Base importada do sistema interno: código (chave), descrição, marca; `updated_at` só muda quando o conteúdo muda. **Só admin** |
+| `system_products_reconciliation` (view) | Cada código da base com a situação no catálogo: `missing`, `inactive` ou `published` (`security_invoker`) |
 | `catalog_item_codes` | Códigos do produto (código **único no catálogo**, descrição, embalagem, ordem); `item_id` → `catalog_items.id` (`ON DELETE CASCADE`) |
 | `admin_users` | Lista de usuários do Auth com permissão de administrador |
 

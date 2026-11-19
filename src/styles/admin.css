@@ -556,6 +556,312 @@ p.admin-pad.state {
   vertical-align: 1px;
 }
 
+/* Seções da barra lateral */
+.sb-section {
+  margin: 12px 12px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Etiquetas de situação (planilha e conciliação) */
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+
+.pill-valid {
+  color: var(--ok);
+}
+
+.pill-invalid {
+  color: var(--err);
+}
+
+.pill-duplicate {
+  color: var(--acc);
+}
+
+.txt-err {
+  color: var(--err);
+}
+
+.txt-warn {
+  color: var(--acc);
+}
+
+.act-pri {
+  background: var(--acc);
+  border-color: var(--acc);
+  color: var(--white);
+}
+
+.act-pri:hover:not(:disabled) {
+  border-color: var(--navy);
+}
+
+.act-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.col-code {
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tb-btn {
+  padding: 9px 16px;
+  font-size: 0.9rem;
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+/* Importação de planilha */
+.import-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1200px;
+}
+
+.import-step {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.step-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 32px 16px;
+  border: 2px dashed var(--line);
+  border-radius: var(--r-card);
+  background: var(--bg);
+  text-align: center;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.dropzone span {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--mut);
+}
+
+.dropzone:hover,
+.dropzone.over {
+  border-color: var(--acc);
+}
+
+.import-help {
+  font-size: 0.88rem;
+  color: var(--mut);
+}
+
+.import-help p {
+  margin: 0 0 6px;
+}
+
+.import-help code {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.import-error {
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--err);
+  border-left-width: 4px;
+  border-radius: var(--r-input);
+  color: var(--err);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+ul.import-error {
+  padding-left: 28px;
+}
+
+.import-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stat {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--card);
+  color: var(--mut);
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.stat b {
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.stat-valid b {
+  color: var(--ok);
+}
+
+.stat-invalid b {
+  color: var(--err);
+}
+
+.stat-duplicate b {
+  color: var(--acc);
+}
+
+.stat[aria-pressed="true"] {
+  border-color: var(--navy);
+  box-shadow: inset 0 0 0 1px var(--navy);
+}
+
+.import-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.progress {
+  position: relative;
+  height: 28px;
+  border-radius: var(--r-btn);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.progress > div {
+  height: 100%;
+  background: var(--acc);
+  transition: width 0.2s ease;
+}
+
+.progress span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.import-result dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.import-result dl > div {
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+  background: var(--bg);
+}
+
+.import-result dt {
+  font-size: 0.75rem;
+  color: var(--mut);
+  font-weight: 600;
+}
+
+.import-result dd {
+  margin: 2px 0 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.result-ok dd {
+  color: var(--ok);
+}
+
+.result-warn dd {
+  color: var(--acc);
+}
+
+.result-err dd {
+  color: var(--err);
+}
+
+.result-mut dd {
+  color: var(--mut);
+}
+
+.result-link {
+  display: inline-block;
+  margin-top: 12px;
+}
+
+.preview-scroll {
+  max-height: 480px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+}
+
+.preview-table {
+  min-width: 720px;
+}
+
+.preview-table th:first-child,
+.preview-table td:first-child {
+  padding-left: 12px;
+}
+
+.preview-table th:last-child,
+.preview-table td:last-child {
+  padding-right: 12px;
+}
+
+.preview-table .cell-sub {
+  white-space: normal;
+}
+
 /* --------------------------------------------------------------------------
    5. Alternador (switch)
    -------------------------------------------------------------------------- */
@@ -899,6 +1205,10 @@ p.admin-pad.state {
   }
 
   .sb-user {
+    display: none;
+  }
+
+  .sb-section {
     display: none;
   }
 

@@ -34,6 +34,7 @@ por qualquer um dos seus códigos.
    - `20261119020000_realtime_catalog_sync.sql`: atualização da vitrine em tempo real.
    - `20261119030000_produtos_codigos.sql`: marca, selo, ficha técnica e **vários códigos por produto**.
      Os produtos que já existirem são migrados: o SKU vira o primeiro código e as descrições viram ficha técnica.
+   - `20261119040000_base_sistema.sql`: base do sistema interno (importação de planilha) e conciliação com o catálogo.
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
@@ -117,6 +118,22 @@ cd catalogo-sp-2027
 ```bash
 npm install @supabase/supabase-js react-router-dom
 ```
+
+## Importação do sistema interno e conciliação
+
+No painel, em **Sistema interno**:
+
+- **Importar planilha:** arquivo `.csv` ou `.xlsx` com as colunas `CODIGO`, `DESCRICAO` e `MARCA`. A ordem não
+  importa, nem acentos ou maiúsculas, e colunas extras são ignoradas. Há pré-visualização com validação antes de
+  gravar. A gravação é por código (upsert) e o resumo mostra inseridos, atualizados, sem mudança e ignorados.
+  Código e marca são gravados em MAIÚSCULAS. CSV salvo pelo Excel em português (Windows-1252, separado por
+  `;`) é lido corretamente.
+- **Pendentes no catálogo:** mostra os códigos da base que **não aparecem na vitrine**. Cada um está **não
+  cadastrado** (em nenhum produto) ou **fora do ar** (produto ou categoria inativa). Tem busca por código,
+  descrição ou marca. **+ Cadastrar no catálogo** abre o formulário de produto já preenchido com código, descrição
+  e marca.
+
+A base do sistema só é visível para administradores.
 
 ## Atualização em tempo real (Supabase Realtime)
 

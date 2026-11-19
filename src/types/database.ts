@@ -189,14 +189,61 @@ export type Database = {
           },
         ];
       };
+      system_products: {
+        Row: {
+          code: string;
+          description: string;
+          brand: string;
+          search_text: string;
+          created_at: string;
+          updated_at: string;
+          last_seen_at: string;
+        };
+        Insert: {
+          code: string;
+          description: string;
+          brand: string;
+          search_text?: string;
+          created_at?: string;
+          updated_at?: string;
+          last_seen_at?: string;
+        };
+        Update: {
+          code?: string;
+          description?: string;
+          brand?: string;
+          search_text?: string;
+          created_at?: string;
+          updated_at?: string;
+          last_seen_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
-      [_ in never]: never;
+      system_products_reconciliation: {
+        Row: {
+          code: string;
+          description: string;
+          brand: string;
+          search_text: string;
+          updated_at: string;
+          last_seen_at: string;
+          catalog_item_id: string | null;
+          catalog_item_title: string | null;
+          catalog_status: string;
+        };
+        Relationships: [];
+      };
     };
     Functions: {
       is_admin: {
         Args: never;
         Returns: boolean;
+      };
+      import_system_products: {
+        Args: { p_rows: Json };
+        Returns: Json;
       };
       save_catalog_item: {
         Args: { p_id: string | null; p_item: Json; p_codes: Json };

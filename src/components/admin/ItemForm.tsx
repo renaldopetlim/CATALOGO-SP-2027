@@ -11,6 +11,13 @@ import { SpecificationsEditor } from './SpecificationsEditor';
 
 export type ItemFormMode = 'create' | 'edit' | 'duplicate';
 
+/** Valores iniciais para um produto novo (ex.: vindos da base do sistema na conciliação). */
+export type ItemFormPrefill = {
+  title?: string;
+  brand?: string;
+  codes?: Array<{ code: string; description?: string; packaging?: string }>;
+};
+
 type ItemFormProps = {
   mode: ItemFormMode;
   /** Produto a editar ou a duplicar (ausente ao criar). */
@@ -19,6 +26,8 @@ type ItemFormProps = {
   categories: Category[];
   /** Categoria pré-selecionada para novos produtos. */
   defaultCategoryId?: string | null;
+  /** Só no modo `create`: título, marca e códigos já preenchidos. */
+  prefill?: ItemFormPrefill | null;
   onSaved: (result: SaveItemResult, mode: ItemFormMode) => void;
   onCancel: () => void;
 };
@@ -35,11 +44,16 @@ type FormState = {
 
 type FieldErrors = Partial<Record<'title' | 'brand' | 'category_id' | 'image' | 'codes', string>>;
 
-function initialState(mode: ItemFormMode, item: CatalogItemWithCategory | null | undefined, defaultCategoryId: string | null): FormState {
+function initialState(
+  mode: ItemFormMode,
+  item: CatalogItemWithCategory | null | undefined,
+  defaultCategoryId: string | null,
+  prefill: ItemFormPrefill | null,
+): FormState {
   const duplicate = mode === 'duplicate';
   return {
-    title: item ? (duplicate ? `${item.title} (cópia)` : item.title) : '',
-    brand: item?.brand ?? '',
+    title: item ? (duplicate ? `${item.title} (cópia)` : item.title) : (prefill?.title ?? ''),
+    brand: item?.brand ?? prefill?.brand ?? '',
     category_id: item?.category_id ?? defaultCategoryId ?? '',
     badge: item?.badge ?? '',
     tags: item?.tags.join(', ') ?? '',
@@ -49,7 +63,16 @@ function initialState(mode: ItemFormMode, item: CatalogItemWithCategory | null |
   };
 }
 
-function initialCodes(mode: ItemFormMode, item: CatalogItemWithCategory | null | undefined): CodeRow[] {
+function initialCodes(
+  mode: ItemFormMode,
+  item: CatalogItemWithCategory | null | undefined,
+  prefill: ItemFormPrefill | null,
+): CodeRow[] {
+  if (!item && prefill?.codes?.length) {
+    return prefill.codes.map((code) =>
+      newCodeRow({ code: code.code, description: code.description ?? '', packaging: code.packaging ?? '' }),
+    );
+  }
   if (!item || item.codes.length === 0) return [newCodeRow()];
   return item.codes.map((code) =>
     mode === 'duplicate'
@@ -93,10 +116,11 @@ const TITLES: Record<ItemFormMode, string> = {
 };
 
 /** Formulário de produto em gaveta lateral (criar, editar ou duplicar). */
-export function ItemForm({ mode, item, categories, defaultCategoryId = null, onSaved, onCancel }: ItemFormProps) {
+export function ItemForm({ mode, item, categories, defaultCategoryId = null, prefill = null, onSaved, onCancel }: ItemFormProps) {
   const formId = useId();
-  const [form, setForm] = useState<FormState>(() => initialState(mode, item, defaultCategoryId));
-  const [codes, setCodes] = useState<CodeRow[]>(() => initialCodes(mode, item));
+  const usePrefill = mode === 'create' ? prefill : null;
+  const [form, setForm] = useState<FormState>(() => initialState(mode, item, defaultCategoryId, usePrefill));
+  const [codes, setCodes] = useState<CodeRow[]>(() => initialCodes(mode, item, usePrefill));
   const [specs, setSpecs] = useState<SpecRow[]>(() => (item?.specifications ?? []).map((spec) => newSpecRow(spec)));
   const [image, setImage] = useState<ImageValue>({ mode: 'url', url: item?.image_url ?? null });
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -173,7 +197,9 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, onS
           .join(' · ')
       : mode === 'duplicate' && item
         ? `Cópia de “${item.title}”, criada inativa. Informe códigos novos.`
-        : undefined;
+        : usePrefill
+          ? 'Pré-preenchido com os dados do sistema. Revise o título e escolha a categoria.'
+          : undefined;
 
   const submitLabel = saving
     ? image.mode === 'file'
