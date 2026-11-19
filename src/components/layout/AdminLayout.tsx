@@ -17,6 +17,7 @@ function NavIcon({ path }: { path: string }) {
 const ICONS = {
   items: 'M3 5h18M3 12h18M3 19h18M7 5v14',
   categories: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+  brands: 'M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01',
   pending: 'M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
   upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
   store: 'M14 3h7v7M10 14 21 3M21 14v7H3V3h7',
@@ -61,6 +62,10 @@ export function AdminLayout() {
           <NavLink to="/admin/categorias">
             <NavIcon path={ICONS.categories} />
             Categorias
+          </NavLink>
+          <NavLink to="/admin/marcas">
+            <NavIcon path={ICONS.brands} />
+            Marcas
           </NavLink>
           <span className="sb-section">Sistema interno</span>
           <NavLink to="/admin/pendentes">

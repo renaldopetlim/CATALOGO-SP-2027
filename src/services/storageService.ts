@@ -63,14 +63,17 @@ export function isCatalogStorageUrl(url: string | null | undefined): boolean {
 
 /**
  * Envia uma imagem ao bucket `catalog-images`.
- * Caminho gerado: `items/AAAA/<uuid>.<ext>`. O nome aleatório evita colisões e
+ * Caminho gerado: `<pasta>/AAAA/<uuid>.<ext>` (pasta `items` ou `brands`). O nome aleatório evita colisões e
  * cache desatualizado, então o arquivo pode ter cache longo.
  */
-export async function uploadCatalogImage(file: File): Promise<UploadedImage> {
+/** Pastas do bucket: fotos de produtos e logos de marcas. */
+export type ImageFolder = 'items' | 'brands';
+
+export async function uploadCatalogImage(file: File, folder: ImageFolder = 'items'): Promise<UploadedImage> {
   const contentType = validateImageFile(file);
   const extension = ALLOWED_IMAGE_TYPES[contentType];
   const year = new Date().getFullYear();
-  const path = `items/${year}/${crypto.randomUUID()}.${extension}`;
+  const path = `${folder}/${year}/${crypto.randomUUID()}.${extension}`;
 
   try {
     const { data, error } = await supabase.storage

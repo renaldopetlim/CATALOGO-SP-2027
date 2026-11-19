@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BADGE_LABELS, type CatalogItemWithCategory } from '../../types/catalog';
+import { BrandLogo } from '../brand/BrandLogo';
 import { ItemImage } from './ItemImage';
 
 /** Estado enviado ao abrir o modal a partir de uma lista (permite fechar com "voltar"). */
@@ -12,7 +13,7 @@ type ItemCardProps = {
 };
 
 /**
- * Card da vitrine: imagem, selo opcional, título e marca.
+ * Card da vitrine: imagem, selo opcional, título e marca (com logo, quando houver).
  * Códigos, ficha técnica e categoria ficam nos detalhes; tags nunca aparecem.
  */
 export function ItemCard({ item, to }: ItemCardProps) {
@@ -26,7 +27,12 @@ export function ItemCard({ item, to }: ItemCardProps) {
       </div>
       <div className="item-body">
         <h3 className="item-title">{item.title}</h3>
-        {item.brand && <span className="item-brand">{item.brand}</span>}
+        {item.brand && (
+          <span className="item-brand">
+            {item.brandInfo?.logo_url && <BrandLogo name={item.brand} logoUrl={item.brandInfo.logo_url} size="sm" decorative />}
+            <span>{item.brand}</span>
+          </span>
+        )}
       </div>
     </Link>
   );

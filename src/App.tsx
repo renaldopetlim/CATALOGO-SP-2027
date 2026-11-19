@@ -14,6 +14,7 @@ const AdminItemsPage = lazy(() => import('./pages/admin/AdminItemsPage').then((m
 const AdminCategoriesPage = lazy(() =>
   import('./pages/admin/AdminCategoriesPage').then((m) => ({ default: m.AdminCategoriesPage })),
 );
+const AdminBrandsPage = lazy(() => import('./pages/admin/AdminBrandsPage').then((m) => ({ default: m.AdminBrandsPage })));
 const AdminImportPage = lazy(() => import('./pages/admin/AdminImportPage').then((m) => ({ default: m.AdminImportPage })));
 const AdminPendingPage = lazy(() => import('./pages/admin/AdminPendingPage').then((m) => ({ default: m.AdminPendingPage })));
 
@@ -56,6 +57,7 @@ export default function App() {
           >
             <Route index element={<AdminItemsPage />} />
             <Route path="categorias" element={<AdminCategoriesPage />} />
+            <Route path="marcas" element={<AdminBrandsPage />} />
             <Route path="pendentes" element={<AdminPendingPage />} />
             <Route path="importar" element={<AdminImportPage />} />
             <Route path="*" element={<NotFoundPage />} />

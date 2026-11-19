@@ -4,6 +4,7 @@ import { useCatalogParams } from '../../hooks/useCatalogParams';
 import { BADGE_LABELS, type CatalogItemWithCategory } from '../../types/catalog';
 import { Modal } from '../ui/Modal';
 import { ErrorState } from '../ui/StateMessage';
+import { BrandLogo } from '../brand/BrandLogo';
 import { ItemImage } from './ItemImage';
 import type { ItemLinkState } from './ItemCard';
 
@@ -66,7 +67,10 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
             <h2 className="detail-title">{item.title}</h2>
             {item.brand && (
               <span className="detail-brand">
-                Marca: <strong>{item.brand}</strong>
+                {item.brandInfo?.logo_url && <BrandLogo name={item.brand} logoUrl={item.brandInfo.logo_url} size="md" decorative />}
+                <span>
+                  Marca: <strong>{item.brand}</strong>
+                </span>
               </span>
             )}
 

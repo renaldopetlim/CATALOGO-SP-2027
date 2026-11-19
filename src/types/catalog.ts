@@ -1,3 +1,4 @@
+import type { BrandSummary } from './brands';
 import type { Json, TableRow } from './database';
 
 /* ==========================================================================
@@ -68,10 +69,15 @@ export type CatalogItem = Omit<TableRow<'catalog_items'>, 'search_text' | 'price
 /** Resumo da categoria embutido em cada produto. */
 export type CategorySummary = Pick<Category, 'id' | 'name' | 'slug' | 'is_active'>;
 
-/** Produto com categoria e códigos (ordenados por `sort_order`). */
+/** Produto com categoria, marca (com logo) e códigos (ordenados por `sort_order`). */
 export type CatalogItemWithCategory = CatalogItem & {
   category: CategorySummary;
   codes: CatalogItemCode[];
+  /**
+   * Marca vinculada. `null` sem marca ou, para o visitante, quando a marca está
+   * inativa (o nome continua em `brand`, mas o logo não aparece).
+   */
+  brandInfo: BrandSummary | null;
 };
 
 /* ==========================================================================
@@ -103,7 +109,8 @@ export type CatalogItemCodeInput = {
 export type SaveCatalogItemInput = {
   title: string;
   category_id: string;
-  brand?: string | null;
+  /** Marca cadastrada (`brands.id`); o texto `brand` é preenchido pelo banco. */
+  brand_id?: string | null;
   badge?: CatalogBadge | null;
   /** URL pública do Storage ou URL externa (http/https). */
   image_url?: string | null;

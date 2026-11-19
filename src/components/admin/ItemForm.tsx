@@ -1,9 +1,10 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useCallback, useId, useState, type FormEvent } from 'react';
 import { isServiceError } from '../../lib/errors';
 import { isHttpUrl, parseTagsInput } from '../../lib/format';
 import { saveCatalogItem, type SaveItemResult } from '../../services/adminCatalogService';
 import { BADGE_LABELS, BADGES, isCatalogBadge, type CatalogBadge, type Category, type CatalogItemWithCategory } from '../../types/catalog';
 import { Drawer } from '../ui/Drawer';
+import { BrandSelect } from './BrandSelect';
 import { CodesEditor } from './CodesEditor';
 import { newCodeRow, newSpecRow, type CodeRow, type SpecRow } from './editorRows';
 import { ImageInput, type ImageValue } from './ImageInput';
@@ -34,7 +35,8 @@ type ItemFormProps = {
 
 type FormState = {
   title: string;
-  brand: string;
+  /** `brands.id`; '' = sem marca. */
+  brand_id: string;
   category_id: string;
   badge: CatalogBadge | '';
   tags: string;
@@ -42,7 +44,7 @@ type FormState = {
   is_active: boolean;
 };
 
-type FieldErrors = Partial<Record<'title' | 'brand' | 'category_id' | 'image' | 'codes', string>>;
+type FieldErrors = Partial<Record<'title' | 'category_id' | 'image' | 'codes', string>>;
 
 function initialState(
   mode: ItemFormMode,
@@ -53,7 +55,7 @@ function initialState(
   const duplicate = mode === 'duplicate';
   return {
     title: item ? (duplicate ? `${item.title} (cópia)` : item.title) : (prefill?.title ?? ''),
-    brand: item?.brand ?? prefill?.brand ?? '',
+    brand_id: item?.brand_id ?? '',
     category_id: item?.category_id ?? defaultCategoryId ?? '',
     badge: item?.badge ?? '',
     tags: item?.tags.join(', ') ?? '',
@@ -129,6 +131,11 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const setBrandId = useCallback((brandId: string) => {
+    setForm((prev) => ({ ...prev, brand_id: brandId }));
+    setSubmitError(null);
+  }, []);
+
   const set = <K extends keyof FormState>(field: K, value: FormState[K]) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -140,7 +147,6 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
     const fieldErrors: FieldErrors = {};
     if (!form.title.trim()) fieldErrors.title = 'Campo obrigatório';
     else if (form.title.trim().length > 200) fieldErrors.title = 'Máximo de 200 caracteres';
-    if (form.brand.trim().length > 120) fieldErrors.brand = 'Máximo de 120 caracteres';
     if (!form.category_id) fieldErrors.category_id = 'Selecione uma categoria';
     if (image.mode === 'url' && image.url && !isHttpUrl(image.url.trim())) {
       fieldErrors.image = 'Informe uma URL começando com http:// ou https://';
@@ -164,7 +170,7 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
         id: mode === 'edit' ? item?.id : undefined,
         input: {
           title: form.title,
-          brand: form.brand,
+          brand_id: form.brand_id || null,
           category_id: form.category_id,
           badge: form.badge || null,
           tags: parseTagsInput(form.tags),
@@ -237,15 +243,19 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
         <fieldset disabled={saving}>
           <legend>Produto</legend>
           <div className="g">
-            <div>
+            <div className="full">
               <label htmlFor="item-title">Título do produto *</label>
               <input id="item-title" value={form.title} maxLength={200} onChange={(e) => set('title', e.target.value)} className={fieldClass('title')} />
               {errors.title && <div className="msg">{errors.title}</div>}
             </div>
-            <div>
-              <label htmlFor="item-brand">Marca</label>
-              <input id="item-brand" value={form.brand} maxLength={120} placeholder="Ex.: Ciser, Tigre, Portobello" onChange={(e) => set('brand', e.target.value)} className={fieldClass('brand')} />
-              {errors.brand && <div className="msg">{errors.brand}</div>}
+            <div className="full">
+              <BrandSelect
+                value={form.brand_id}
+                onChange={setBrandId}
+                // Base do sistema (Pendentes) ou produto antigo ainda sem marca vinculada.
+                hintName={usePrefill?.brand ?? (item && !item.brand_id ? (item.brand ?? '') : '')}
+                disabled={saving}
+              />
             </div>
             <div>
               <label htmlFor="item-category">Categoria *</label>
