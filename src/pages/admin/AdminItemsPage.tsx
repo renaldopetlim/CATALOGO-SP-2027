@@ -4,6 +4,7 @@ import { ItemForm } from '../../components/admin/ItemForm';
 import { ItemImage } from '../../components/catalog/ItemImage';
 import { SearchBar } from '../../components/catalog/SearchBar';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { LiveIndicator } from '../../components/ui/LiveIndicator';
 import { EmptyState, ErrorState } from '../../components/ui/StateMessage';
 import { Toast } from '../../components/ui/Toast';
 import { useAdminCategories } from '../../hooks/useAdminCategories';
@@ -57,7 +58,7 @@ export function AdminItemsPage() {
   const categories = useAdminCategories();
   const items = useCatalogItems(
     { search, categoryId, status, featured: featuredOnly, sort: 'recent' },
-    { scope: 'admin', pageSize: 30, refetchOnFocus: false },
+    { scope: 'admin', pageSize: 30, refetchOnFocus: false, live: true },
   );
   const { toast, show, dismiss } = useToast();
 
@@ -178,6 +179,7 @@ export function AdminItemsPage() {
       {items.status === 'success' && (
         <p className="result-info">
           {items.total === 1 ? '1 item' : `${items.total.toLocaleString('pt-BR')} itens`}
+          <LiveIndicator showOffline />
           {hasFilters && (
             <>
               {' · '}

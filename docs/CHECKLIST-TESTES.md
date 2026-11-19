@@ -144,6 +144,12 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
   - **Esperado:** os filtros da janela B acompanham a nova ordem, numa única atualização.
 - [ ] Desligue o Wi-Fi da janela B por alguns segundos, altere algo na janela A e religue.
   - **Esperado:** o indicador some e volta, e a janela B mostra a alteração feita enquanto estava desconectada.
+- [ ] Abra o painel em duas abas (A1 e A2). Na A1, edite um item.
+  - **Esperado:** a lista da A2 mostra a mudança sozinha, com **● ao vivo** em Itens e em Categorias.
+- [ ] Com um formulário aberto na A2, altere outro item na A1.
+  - **Esperado:** o texto digitado na A2 é preservado e só a lista atrás do formulário é atualizada.
+- [ ] Desligue a internet com o painel aberto.
+  - **Esperado:** o indicador muda para **● reconectando…** e volta para **● ao vivo** quando a conexão retorna.
 - [ ] No SQL Editor, confira se só a tabela de sinal está publicada:
 
   ```sql
