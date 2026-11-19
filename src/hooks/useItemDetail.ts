@@ -3,6 +3,7 @@ import { getCatalogItemById } from '../services/catalogService';
 import type { ServiceError } from '../lib/errors';
 import type { CatalogItemWithCategory } from '../types/catalog';
 import type { AsyncStatus } from './asyncState';
+import { useCatalogLive } from './useCatalogLive';
 import { useResource } from './useResource';
 
 export type UseItemDetailResult = {
@@ -28,6 +29,9 @@ export function useItemDetail(
     'carregar o item',
     Boolean(itemId) && !cached,
   );
+
+  // Com `initial`, quem atualiza é a lista; sem ele (link direto), o próprio detalhe.
+  useCatalogLive(reload, Boolean(itemId) && !cached);
 
   if (cached) return { item: cached, status: 'success', error: null, reload };
   return { item: data, status, error, reload };

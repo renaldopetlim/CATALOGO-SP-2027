@@ -128,6 +128,29 @@ Use duas janelas do navegador: **A** normal (admin) e **B** anônima (visitante)
   - **Esperado:** na janela B somem a categoria **e** os itens dela.
   - No admin, os itens continuam visíveis com "(categoria inativa)".
 
+## 5b. Tempo real (sem recarregar a janela B)
+
+> Requer a migração `20261119020000_realtime_catalog_sync.sql`.
+
+- [ ] Na janela B, abra `/catalogo`.
+  - **Esperado:** o indicador **● ao vivo** aparece ao lado do total de itens.
+- [ ] Na janela A, altere o preço de um item. **Não** mexa na janela B.
+  - **Esperado:** em cerca de 1 segundo, o preço novo aparece na janela B.
+- [ ] Na janela B, abra o modal de um item. Na janela A, inative esse item.
+  - **Esperado:** o modal da janela B passa a mostrar "Item indisponível" e o item sai da lista.
+- [ ] Na janela A, crie um item em destaque com a janela B aberta em `/`.
+  - **Esperado:** ele aparece em **Destaques** sozinho.
+- [ ] Na janela A, reordene várias categorias seguidas.
+  - **Esperado:** os filtros da janela B acompanham a nova ordem, numa única atualização.
+- [ ] Desligue o Wi-Fi da janela B por alguns segundos, altere algo na janela A e religue.
+  - **Esperado:** o indicador some e volta, e a janela B mostra a alteração feita enquanto estava desconectada.
+- [ ] No SQL Editor, confira se só a tabela de sinal está publicada:
+
+  ```sql
+  select tablename from pg_publication_tables where pubname = 'supabase_realtime';
+  -- esperado: catalog_sync
+  ```
+
 ## 6. Excluir
 
 - [ ] Em **Categorias**, clique em **Excluir** na categoria Pisos, que tem itens.
