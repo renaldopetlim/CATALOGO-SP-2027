@@ -90,6 +90,7 @@ export type Database = {
           description: string | null;
           sort_order: number;
           is_active: boolean;
+          has_color_swatches: boolean;
           created_at: string;
         };
         Insert: {
@@ -99,6 +100,7 @@ export type Database = {
           description?: string | null;
           sort_order?: number;
           is_active?: boolean;
+          has_color_swatches?: boolean;
           created_at?: string;
         };
         Update: {
@@ -108,6 +110,7 @@ export type Database = {
           description?: string | null;
           sort_order?: number;
           is_active?: boolean;
+          has_color_swatches?: boolean;
           created_at?: string;
         };
         Relationships: [];
@@ -189,6 +192,9 @@ export type Database = {
           code: string;
           description: string | null;
           packaging: string | null;
+          color_name: string | null;
+          color_hex: string | null;
+          color_swatch_url: string | null;
           sort_order: number;
           created_at: string;
           updated_at: string;
@@ -199,6 +205,9 @@ export type Database = {
           code: string;
           description?: string | null;
           packaging?: string | null;
+          color_name?: string | null;
+          color_hex?: string | null;
+          color_swatch_url?: string | null;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;
@@ -209,6 +218,9 @@ export type Database = {
           code?: string;
           description?: string | null;
           packaging?: string | null;
+          color_name?: string | null;
+          color_hex?: string | null;
+          color_swatch_url?: string | null;
           sort_order?: number;
           created_at?: string;
           updated_at?: string;

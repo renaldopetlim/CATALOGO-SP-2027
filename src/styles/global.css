@@ -1245,3 +1245,187 @@ input[type="file"] {
 .login-alt .tb-link:hover {
   text-decoration: underline;
 }
+
+/* ==========================================================================
+   Cores (swatches) — categorias com cores, ex.: Tintas e Complementos
+   ========================================================================== */
+.swatch {
+  display: inline-block;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: var(--white);
+  background-size: cover;
+  background-position: center;
+  /* Borda discreta: cores claras (branco, gelo) continuam visíveis */
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.swatch.empty {
+  background-image: linear-gradient(135deg, transparent 45%, var(--err) 45%, var(--err) 55%, transparent 55%);
+}
+
+.swatch-xs {
+  width: 14px;
+  height: 14px;
+}
+
+.swatch-sm {
+  width: 18px;
+  height: 18px;
+}
+
+.swatch-md {
+  width: 28px;
+  height: 28px;
+}
+
+.swatch-lg {
+  width: 40px;
+  height: 40px;
+}
+
+/* Card: mini paleta */
+.color-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.color-strip .swatch + .swatch {
+  margin-left: -2px;
+}
+
+.color-more {
+  margin-left: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--mut);
+  white-space: nowrap;
+}
+
+/* Detalhes: seletor */
+.color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.color-picker .label {
+  margin: 0;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 6px;
+}
+
+.color-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: 1px solid transparent;
+  border-radius: var(--r-input);
+  background: transparent;
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.color-option:hover {
+  border-color: var(--line);
+}
+
+.color-option.on {
+  border-color: var(--acc);
+  box-shadow: inset 0 0 0 1px var(--acc);
+}
+
+.color-option.on .swatch {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 0 0 2px var(--card),
+    0 0 0 4px var(--acc);
+}
+
+.color-option:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+.color-option-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.color-selected {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--acc);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  font-size: 0.88rem;
+}
+
+.color-selected ul {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.color-selected .cell-sub {
+  display: inline;
+  margin-left: 6px;
+  font-size: 0.78rem;
+  color: var(--mut);
+}
+
+.codes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.codes-head .label {
+  margin: 0;
+}
+
+.codes-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+.color-cell-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.codes-table tr.is-picked td {
+  background: color-mix(in srgb, var(--acc) 10%, var(--card));
+}
+
+.codes-table tr.is-picked td:first-child {
+  box-shadow: inset 3px 0 0 var(--acc);
+}

@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { BADGE_LABELS, type CatalogItemWithCategory } from '../../types/catalog';
+import { colorOptions } from '../../lib/colors';
 import { BrandLogo } from '../brand/BrandLogo';
+import { ColorStrip } from './ColorStrip';
 import { ItemImage } from './ItemImage';
 
 /** Estado enviado ao abrir o modal a partir de uma lista (permite fechar com "voltar"). */
@@ -18,6 +20,8 @@ type ItemCardProps = {
  */
 export function ItemCard({ item, to }: ItemCardProps) {
   const state: ItemLinkState = { fromList: true };
+  // Paleta só nas categorias com cores (ex.: Tintas e Complementos).
+  const colors = item.category.has_color_swatches ? colorOptions(item.codes) : [];
 
   return (
     <Link to={to} state={state} preventScrollReset className="item-card" aria-label={`Ver detalhes: ${item.title}`}>
@@ -33,6 +37,7 @@ export function ItemCard({ item, to }: ItemCardProps) {
             <span>{item.brand}</span>
           </span>
         )}
+        {colors.length > 0 && <ColorStrip colors={colors} />}
       </div>
     </Link>
   );

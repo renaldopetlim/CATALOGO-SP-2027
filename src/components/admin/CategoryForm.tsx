@@ -23,6 +23,7 @@ export function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps)
   const [slugTouched, setSlugTouched] = useState(isEdit);
   const [description, setDescription] = useState(category?.description ?? '');
   const [isActive, setIsActive] = useState(category?.is_active ?? true);
+  const [hasSwatches, setHasSwatches] = useState(category?.has_color_swatches ?? false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -40,7 +41,7 @@ export function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps)
 
     setSaving(true);
     try {
-      const input = { name, slug: effectiveSlug, description, is_active: isActive };
+      const input = { name, slug: effectiveSlug, description, is_active: isActive, has_color_swatches: hasSwatches };
       const saved = category ? await updateCategory(category.id, input) : await createCategory(input);
       onSaved(saved, isEdit ? 'updated' : 'created');
     } catch (err) {
@@ -118,6 +119,16 @@ export function CategoryForm({ category, onSaved, onCancel }: CategoryFormProps)
                 <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
                 Ativa (visível na vitrine, junto com seus itens)
               </label>
+            </div>
+            <div className="full">
+              <label className="check">
+                <input type="checkbox" checked={hasSwatches} onChange={(e) => setHasSwatches(e.target.checked)} />
+                Produtos com cores (ex.: tintas)
+              </label>
+              <p className="hint">
+                Cada código ganha nome da cor, cor (hexadecimal) e amostra opcional. A vitrine mostra a paleta no card e um
+                seletor de cores nos detalhes.
+              </p>
             </div>
           </div>
         </fieldset>

@@ -1778,6 +1778,96 @@ ul.import-error {
 }
 
 /* --------------------------------------------------------------------------
+   Cores nos códigos (categorias com cores, ex.: Tintas)
+   -------------------------------------------------------------------------- */
+.color-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 200px minmax(0, 1.2fr);
+  align-items: end;
+  gap: 8px;
+  margin: 2px 0 6px;
+  padding: 8px 10px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r-input);
+  background: var(--bg);
+}
+
+.codes-editor.with-colors .rows-line + .rows-line {
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.color-fields label {
+  font-size: 0.68rem;
+}
+
+.cf-hex-row,
+.cf-swatch-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cf-hex-row input[type="color"] {
+  width: 38px;
+  height: 34px;
+  flex-shrink: 0;
+  padding: 2px;
+  cursor: pointer;
+}
+
+.cf-hex-row input:not([type="color"]) {
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-transform: uppercase;
+}
+
+.cf-swatch-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cf-file {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.cf-upload {
+  margin: 0;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+
+.cf-upload.off {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cf-upload:has(input:focus-visible) {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+@media (max-width: 1100px) {
+  .color-fields {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .cf-hex,
+  .cf-swatch {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --------------------------------------------------------------------------
    7. Notebooks (< 1366px): mais espaço para a tabela
    -------------------------------------------------------------------------- */
 @media (max-width: 1365px) {

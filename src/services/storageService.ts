@@ -67,7 +67,8 @@ export function isCatalogStorageUrl(url: string | null | undefined): boolean {
  * cache desatualizado, então o arquivo pode ter cache longo.
  */
 /** Pastas do bucket: fotos de produtos e logos de marcas. */
-export type ImageFolder = 'items' | 'brands';
+/** Pastas do bucket: produtos, logos de marca e amostras de cor (tintas). */
+export type ImageFolder = 'items' | 'brands' | 'swatches';
 
 export async function uploadCatalogImage(file: File, folder: ImageFolder = 'items'): Promise<UploadedImage> {
   const contentType = validateImageFile(file);

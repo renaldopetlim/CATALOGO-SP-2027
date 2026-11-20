@@ -9,7 +9,7 @@ import type {
   UpdateCategoryInput,
 } from '../types/catalog';
 
-const CATEGORY_COLUMNS = 'id, name, slug, description, sort_order, is_active, created_at';
+const CATEGORY_COLUMNS = 'id, name, slug, description, sort_order, is_active, has_color_swatches, created_at';
 
 /* ==========================================================================
    VALIDAÇÃO
@@ -138,6 +138,7 @@ export async function createCategory(input: CreateCategoryInput): Promise<Catego
       description: emptyToNull(input.description),
       sort_order: input.sort_order !== undefined ? validateSortOrder(input.sort_order) : await nextSortOrder(),
       is_active: input.is_active ?? true,
+      has_color_swatches: input.has_color_swatches ?? false,
     };
 
     const { data, error } = await supabase
@@ -161,6 +162,7 @@ export async function updateCategory(id: string, input: UpdateCategoryInput): Pr
     if (input.description !== undefined) payload.description = emptyToNull(input.description);
     if (input.sort_order !== undefined) payload.sort_order = validateSortOrder(input.sort_order);
     if (input.is_active !== undefined) payload.is_active = input.is_active;
+    if (input.has_color_swatches !== undefined) payload.has_color_swatches = input.has_color_swatches;
 
     if (Object.keys(payload).length === 0) {
       throw new ServiceError('validation', 'Nenhuma alteração informada.');

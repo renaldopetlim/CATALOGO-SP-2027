@@ -67,14 +67,14 @@ modal de detalhes, recarregar a página ou compartilhar o link preserva o estado
 
 | Tabela | Papel |
 |---|---|
-| `categories` | Categorias da vitrine, ordenadas por `sort_order` |
+| `categories` | Categorias da vitrine, ordenadas por `sort_order`; `has_color_swatches` liga as cores nos códigos (ex.: Tintas) |
 | `catalog_items` | Produtos: título, marca, selo, imagem, tags (ocultas), ficha técnica (`specifications` jsonb); `category_id` → `categories.id` (`ON DELETE RESTRICT`) |
 | `brands` | Marcas: nome (único, sem diferenciar maiúsculas), `logo_url` (pasta `brands/` do bucket), ativa/inativa. Visitante lê só as ativas |
 | `system_products` | Base importada do sistema interno: código (chave), descrição, marca; `updated_at` só muda quando o conteúdo muda. **Só admin** |
 | `system_products_reconciliation` (view) | Cada código da base com a situação no catálogo: `missing`, `inactive` ou `published` (`security_invoker`) |
 | `import_batches` | Uma linha por planilha importada (arquivo, data, quem, contadores, `undone_at`). **Só admin** |
 | `import_batch_items` | Estado anterior dos códigos tocados pela **última** importação, para desfazê-la. **Só admin** |
-| `catalog_item_codes` | Códigos do produto (código **único no catálogo**, descrição, embalagem, ordem); `item_id` → `catalog_items.id` (`ON DELETE CASCADE`) |
+| `catalog_item_codes` | Códigos do produto (código **único no catálogo**, descrição, embalagem, ordem e, em categorias com cores, `color_name`, `color_hex` `#RRGGBB` e `color_swatch_url`); `item_id` → `catalog_items.id` (`ON DELETE CASCADE`) |
 | `user_profiles` | Usuário do painel: nome, papel (`admin`/`editor`/`viewer`), status e `permissions` (jsonb com 6 chaves). Ver [USUARIOS.md](USUARIOS.md) |
 | `user_invites` | Acesso pré-cadastrado por e-mail; vira perfil quando a conta é criada no Auth |
 | `admin_users` | Legado: migrado para `user_profiles` (não é mais usado pelas regras) |
