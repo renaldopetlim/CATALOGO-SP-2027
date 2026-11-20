@@ -46,7 +46,16 @@ function parseBatchResult(json: Json): ImportBatchResult {
  */
 export async function importSystemProducts(
   rows: SystemProductInput[],
-  { ignored = 0, onProgress }: { ignored?: number; onProgress?: (progress: ImportProgress) => void } = {},
+  {
+    ignored = 0,
+    batchId = null,
+    onProgress,
+  }: {
+    ignored?: number;
+    /** Lote aberto com `startImportBatch`: registra o histórico e permite desfazer. */
+    batchId?: string | null;
+    onProgress?: (progress: ImportProgress) => void;
+  } = {},
 ): Promise<ImportSummary> {
   const summary: ImportSummary = { received: 0, inserted: 0, updated: 0, unchanged: 0, ignored, failed: 0, errors: [] };
   onProgress?.({ sent: 0, total: rows.length });
@@ -54,7 +63,7 @@ export async function importSystemProducts(
   for (let start = 0; start < rows.length; start += IMPORT_BATCH_SIZE) {
     const batch = rows.slice(start, start + IMPORT_BATCH_SIZE);
     try {
-      const { data, error } = await supabase.rpc('import_system_products', { p_rows: batch });
+      const { data, error } = await supabase.rpc('import_system_products', { p_rows: batch, p_batch_id: batchId });
       if (error) throw error;
       const result = parseBatchResult(data);
       summary.received += result.received;
@@ -121,7 +130,7 @@ export async function listReconciliation({
     let query = supabase.from('system_products_reconciliation').select(RECONCILIATION_SELECT, { count: 'exact' });
 
     if (filter === 'pending') query = query.neq('catalog_status', 'published');
-    else query = query.eq('catalog_status', filter);
+    else if (filter !== 'all') query = query.eq('catalog_status', filter);
 
     // Cada termo precisa aparecer no código, na descrição ou na marca (sem acento).
     for (const term of toSearchTerms(search)) {

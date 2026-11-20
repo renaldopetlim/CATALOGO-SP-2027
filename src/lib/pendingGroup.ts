@@ -3,7 +3,7 @@ import type { ReconciliationRow } from '../types/systemProducts';
 import { stripAccents } from './format';
 
 /** Só códigos sem nenhum produto podem entrar num card novo (códigos são únicos no catálogo). */
-export function isSelectable(row: ReconciliationRow): boolean {
+export function canJoinCard(row: ReconciliationRow): boolean {
   return row.status === 'missing';
 }
 

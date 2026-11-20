@@ -72,6 +72,8 @@ modal de detalhes, recarregar a página ou compartilhar o link preserva o estado
 | `brands` | Marcas: nome (único, sem diferenciar maiúsculas), `logo_url` (pasta `brands/` do bucket), ativa/inativa. Visitante lê só as ativas |
 | `system_products` | Base importada do sistema interno: código (chave), descrição, marca; `updated_at` só muda quando o conteúdo muda. **Só admin** |
 | `system_products_reconciliation` (view) | Cada código da base com a situação no catálogo: `missing`, `inactive` ou `published` (`security_invoker`) |
+| `import_batches` | Uma linha por planilha importada (arquivo, data, quem, contadores, `undone_at`). **Só admin** |
+| `import_batch_items` | Estado anterior dos códigos tocados pela **última** importação, para desfazê-la. **Só admin** |
 | `catalog_item_codes` | Códigos do produto (código **único no catálogo**, descrição, embalagem, ordem); `item_id` → `catalog_items.id` (`ON DELETE CASCADE`) |
 | `admin_users` | Lista de usuários do Auth com permissão de administrador |
 
@@ -90,6 +92,20 @@ um código duplicado desfaz tudo.
 (com descrição e embalagem), com índice
 trigram (`pg_trgm`). A busca no front é um único `ILIKE '%termo%'` nessa coluna, sem
 diferenciar acentos ("ceramica" encontra "Cerâmica").
+
+**Importação e limpeza** (migração `20261120000000`), todas `SECURITY INVOKER` e restritas a admin:
+- `start_import_batch(arquivo)` abre o lote e descarta o "desfazer" dos anteriores (só a mais nova pode ser
+  desfeita); `import_system_products(rows, batch_id)` grava e registra o estado anterior.
+- `undo_import_batch(id)` exclui os códigos criados e restaura descrição, marca e datas dos alterados;
+  `delete_import_batch_records(id)` só exclui os criados (`system_products.created_batch_id`).
+- `stale_system_products(modo, dias)` / `purge_stale_system_products(...)`: registros fora do catálogo que não
+  vieram na última importação (`last_import`) ou há mais de N dias (`older_than`).
+- `storage_orphan_files(min_idade, nomes)`: arquivos do bucket sem vínculo com `catalog_items.image_url` nem
+  `brands.logo_url`. A exclusão é feita pela API do Storage (remove o arquivo de fato), depois de conferir de
+  novo os nomes no banco.
+- `cleanup_report(dias)`: números do painel e do contador do menu.
+
+Excluir da base nunca afeta o catálogo: `catalog_item_codes` não tem chave estrangeira para `system_products`.
 
 ## Segurança (RLS)
 

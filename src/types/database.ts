@@ -232,6 +232,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           last_seen_at: string;
+          created_batch_id: string | null;
         };
         Insert: {
           code: string;
@@ -241,6 +242,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           last_seen_at?: string;
+          created_batch_id?: string | null;
         };
         Update: {
           code?: string;
@@ -250,8 +252,97 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           last_seen_at?: string;
+          created_batch_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'system_products_created_batch_id_fkey';
+            columns: ['created_batch_id'];
+            isOneToOne: false;
+            referencedRelation: 'import_batches';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      import_batches: {
+        Row: {
+          id: string;
+          file_name: string;
+          started_at: string;
+          finished_at: string | null;
+          imported_by: string | null;
+          imported_by_email: string | null;
+          received: number;
+          inserted: number;
+          updated: number;
+          unchanged: number;
+          undone_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          file_name: string;
+          started_at?: string;
+          finished_at?: string | null;
+          imported_by?: string | null;
+          imported_by_email?: string | null;
+          received?: number;
+          inserted?: number;
+          updated?: number;
+          unchanged?: number;
+          undone_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          file_name?: string;
+          started_at?: string;
+          finished_at?: string | null;
+          imported_by?: string | null;
+          imported_by_email?: string | null;
+          received?: number;
+          inserted?: number;
+          updated?: number;
+          unchanged?: number;
+          undone_at?: string | null;
         };
         Relationships: [];
+      };
+      import_batch_items: {
+        Row: {
+          batch_id: string;
+          code: string;
+          action: string;
+          prev_description: string | null;
+          prev_brand: string | null;
+          prev_updated_at: string | null;
+          prev_last_seen_at: string | null;
+        };
+        Insert: {
+          batch_id: string;
+          code: string;
+          action: string;
+          prev_description?: string | null;
+          prev_brand?: string | null;
+          prev_updated_at?: string | null;
+          prev_last_seen_at?: string | null;
+        };
+        Update: {
+          batch_id?: string;
+          code?: string;
+          action?: string;
+          prev_description?: string | null;
+          prev_brand?: string | null;
+          prev_updated_at?: string | null;
+          prev_last_seen_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'import_batch_items_batch_id_fkey';
+            columns: ['batch_id'];
+            isOneToOne: false;
+            referencedRelation: 'import_batches';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {
@@ -276,7 +367,35 @@ export type Database = {
         Returns: boolean;
       };
       import_system_products: {
-        Args: { p_rows: Json };
+        Args: { p_rows: Json; p_batch_id?: string | null };
+        Returns: Json;
+      };
+      start_import_batch: {
+        Args: { p_file_name: string };
+        Returns: string;
+      };
+      undo_import_batch: {
+        Args: { p_batch_id: string };
+        Returns: Json;
+      };
+      delete_import_batch_records: {
+        Args: { p_batch_id: string };
+        Returns: number;
+      };
+      stale_system_products: {
+        Args: { p_mode: string; p_days?: number };
+        Returns: Array<{ code: string; description: string; brand: string; last_seen_at: string; created_at: string }>;
+      };
+      purge_stale_system_products: {
+        Args: { p_mode: string; p_days?: number };
+        Returns: number;
+      };
+      storage_orphan_files: {
+        Args: { p_min_age_minutes?: number; p_names?: string[] | null };
+        Returns: Array<{ name: string; size: number; mimetype: string | null; created_at: string }>;
+      };
+      cleanup_report: {
+        Args: { p_days?: number };
         Returns: Json;
       };
       save_catalog_item: {

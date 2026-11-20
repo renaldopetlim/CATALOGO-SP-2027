@@ -1,7 +1,13 @@
 import { useCallback } from 'react';
 import { getReconciliationSummary, listReconciliation } from '../services/systemProductsService';
 import type { ServiceError } from '../lib/errors';
-import type { ReconciliationFilters, ReconciliationListResult, ReconciliationSummary } from '../types/systemProducts';
+import type {
+  ReconciliationFilters,
+  ReconciliationListResult,
+  ReconciliationRow,
+  ReconciliationStatus,
+  ReconciliationSummary,
+} from '../types/systemProducts';
 import type { AsyncStatus } from './asyncState';
 import { useCatalogLive } from './useCatalogLive';
 import { useResource } from './useResource';
@@ -17,6 +23,8 @@ export type UseReconciliationResult = {
    * (`published` = produto e categoria ativos). A recarga confirma em seguida.
    */
   markCataloged: (codes: readonly string[], published: boolean) => void;
+  /** Tira da lista e dos contadores, na hora, registros excluídos da base. */
+  markDeleted: (rows: ReadonlyArray<Pick<ReconciliationRow, 'code' | 'status'>>) => void;
 };
 
 /**
@@ -60,5 +68,26 @@ export function useReconciliation(filters: Required<Pick<ReconciliationFilters, 
     [filter, setList, setSummary, reload],
   );
 
-  return { list: list.data, summary: summary.data, status: list.status, error: list.error, reload, markCataloged };
+  const markDeleted = useCallback(
+    (rows: ReadonlyArray<Pick<ReconciliationRow, 'code' | 'status'>>) => {
+      const gone = new Set(rows.map((row) => row.code));
+      setList((prev) => {
+        const kept = prev.rows.filter((row) => !gone.has(row.code));
+        return { rows: kept, total: Math.max(prev.total - (prev.rows.length - kept.length), 0) };
+      });
+      setSummary((prev) => {
+        const next = { ...prev };
+        for (const row of rows) {
+          const status: ReconciliationStatus = row.status;
+          next[status] = Math.max(next[status] - 1, 0);
+        }
+        next.total = next.missing + next.inactive + next.published;
+        return next;
+      });
+      reload();
+    },
+    [setList, setSummary, reload],
+  );
+
+  return { list: list.data, summary: summary.data, status: list.status, error: list.error, reload, markCataloged, markDeleted };
 }

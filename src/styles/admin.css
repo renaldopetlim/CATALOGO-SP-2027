@@ -1277,6 +1277,223 @@ ul.import-error {
 }
 
 /* --------------------------------------------------------------------------
+   Exclusão na base, histórico de importações e "Saúde e limpeza"
+   -------------------------------------------------------------------------- */
+.sb-badge {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--acc);
+  color: var(--white);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.danger-outline {
+  color: var(--err);
+  border-color: color-mix(in srgb, var(--err) 45%, var(--line));
+}
+
+.danger-outline:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--err) 8%, transparent);
+}
+
+.in-use-note {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ok);
+  border-radius: var(--r-input);
+  background: var(--bg);
+}
+
+.in-use-note p {
+  margin: 6px 0 0;
+}
+
+.result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.result-actions .result-link {
+  margin-top: 0;
+}
+
+.history-table {
+  min-width: 860px;
+}
+
+.cleanup-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 1400px;
+}
+
+.health-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.health-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--line);
+  border-radius: var(--r-card);
+}
+
+.health-card strong {
+  font-size: 1.35rem;
+  color: var(--ink);
+}
+
+.health-card .label {
+  margin: 0;
+}
+
+.health-card .cell-sub {
+  white-space: normal;
+}
+
+.health-card.tone-ok {
+  border-top-color: var(--ok);
+}
+
+.health-card.tone-warn {
+  border-top-color: var(--acc);
+}
+
+.health-card.tone-warn strong {
+  color: var(--acc);
+}
+
+.cleanup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-head .hint {
+  max-width: 760px;
+  margin-top: 4px;
+}
+
+.section-head > button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.criteria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.criteria label.check {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.criteria select {
+  width: auto;
+  padding: 5px 8px;
+  font-size: 0.85rem;
+}
+
+.criteria .cell-sub {
+  display: inline;
+  font-weight: 400;
+}
+
+.orphan-table {
+  min-width: 760px;
+}
+
+.orphan-thumb {
+  display: block;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tag);
+  overflow: hidden;
+  background-color: var(--white);
+  background-image:
+    linear-gradient(45deg, var(--bg) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--bg) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--bg) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--bg) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+
+.orphan-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.orphan-name {
+  word-break: break-all;
+  font-size: 0.82rem;
+}
+
+.orphan-confirm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.orphan-confirm img {
+  flex-shrink: 0;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tag);
+  background: var(--white);
+}
+
+@media (max-width: 1200px) {
+  .health-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .health-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .section-head {
+    flex-direction: column;
+  }
+}
+
+/* --------------------------------------------------------------------------
    7. Notebooks (< 1366px): mais espaço para a tabela
    -------------------------------------------------------------------------- */
 @media (max-width: 1365px) {
