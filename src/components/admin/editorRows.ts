@@ -1,3 +1,5 @@
+import type { GalleryEntry } from '../../services/adminCatalogService';
+
 /** Linhas dos editores do formulário de produto. A `key` é local (só para o React). */
 
 /** Bloco Código + Descrição + Embalagem. `id` existe para códigos já salvos. */
@@ -40,4 +42,11 @@ export function newCodeRow(values: Partial<Omit<CodeRow, 'key'>> = {}): CodeRow 
 
 export function newSpecRow(values: Partial<Omit<SpecRow, 'key'>> = {}): SpecRow {
   return { key: crypto.randomUUID(), label: '', value: '', ...values };
+}
+
+/** Foto da galeria no formulário (a `key` é local, só para o React). */
+export type GalleryItem = GalleryEntry & { key: string };
+
+export function galleryFromUrls(urls: readonly string[]): GalleryItem[] {
+  return urls.map((url) => ({ key: crypto.randomUUID(), kind: 'url', url }));
 }

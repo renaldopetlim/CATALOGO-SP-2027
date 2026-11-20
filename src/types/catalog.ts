@@ -78,6 +78,16 @@ export type CategoryWithItemCount = Category & {
  * Produto do catálogo.
  * `search_text` é interno; `price` continua no banco, mas não é usado na interface.
  */
+/** Limite de fotos por produto (também garantido no banco). */
+export const MAX_ITEM_IMAGES = 5;
+
+/** Fotos do produto em ordem (capa primeiro); cai em `image_url` se a galeria vier vazia. */
+export function itemImages(item: Pick<CatalogItem, 'images' | 'image_url'>): string[] {
+  // Defensivo: dados antigos (antes da migração da galeria) não trazem `images`.
+  if (Array.isArray(item.images) && item.images.length > 0) return item.images;
+  return item.image_url ? [item.image_url] : [];
+}
+
 export type CatalogItem = Omit<TableRow<'catalog_items'>, 'search_text' | 'price' | 'badge' | 'specifications'> & {
   badge: CatalogBadge | null;
   specifications: Specification[];
@@ -135,7 +145,12 @@ export type SaveCatalogItemInput = {
   /** Marca cadastrada (`brands.id`); o texto `brand` é preenchido pelo banco. */
   brand_id?: string | null;
   badge?: CatalogBadge | null;
-  /** URL pública do Storage ou URL externa (http/https). */
+  /**
+   * Galeria (até `MAX_ITEM_IMAGES`), em ordem: a 1ª é a capa. URLs públicas do
+   * Storage ou externas (http/https). O banco mantém `image_url` = capa.
+   */
+  images?: string[];
+  /** @deprecated use `images`. Mantido para chamadas antigas (vira a capa). */
   image_url?: string | null;
   /** Usadas na busca; não aparecem na vitrine. */
   tags?: string[];

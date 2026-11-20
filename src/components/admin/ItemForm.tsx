@@ -9,14 +9,16 @@ import {
   type CatalogBadge,
   type Category,
   type CatalogItemWithCategory,
+  MAX_ITEM_IMAGES,
+  itemImages,
   normalizeHex,
   type ItemFormPrefill,
 } from '../../types/catalog';
 import { Drawer } from '../ui/Drawer';
 import { BrandSelect } from './BrandSelect';
 import { CodesEditor } from './CodesEditor';
-import { newCodeRow, newSpecRow, type CodeRow, type SpecRow } from './editorRows';
-import { ImageInput, type ImageValue } from './ImageInput';
+import { galleryFromUrls, newCodeRow, newSpecRow, type CodeRow, type GalleryItem, type SpecRow } from './editorRows';
+import { GalleryInput } from './GalleryInput';
 import { SpecificationsEditor } from './SpecificationsEditor';
 
 export type ItemFormMode = 'create' | 'edit' | 'duplicate';
@@ -133,7 +135,7 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
   const [form, setForm] = useState<FormState>(() => initialState(mode, item, defaultCategoryId, usePrefill));
   const [codes, setCodes] = useState<CodeRow[]>(() => initialCodes(mode, item, usePrefill));
   const [specs, setSpecs] = useState<SpecRow[]>(() => (item?.specifications ?? []).map((spec) => newSpecRow(spec)));
-  const [image, setImage] = useState<ImageValue>({ mode: 'url', url: item?.image_url ?? null });
+  const [gallery, setGallery] = useState<GalleryItem[]>(() => galleryFromUrls(item ? itemImages(item) : []));
   const [errors, setErrors] = useState<FieldErrors>({});
   const [codeErrors, setCodeErrors] = useState<Record<number, string>>({});
   const [specErrors, setSpecErrors] = useState<Record<number, string>>({});
@@ -160,8 +162,9 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
     if (!form.title.trim()) fieldErrors.title = 'Campo obrigatório';
     else if (form.title.trim().length > 200) fieldErrors.title = 'Máximo de 200 caracteres';
     if (!form.category_id) fieldErrors.category_id = 'Selecione uma categoria';
-    if (image.mode === 'url' && image.url && !isHttpUrl(image.url.trim())) {
-      fieldErrors.image = 'Informe uma URL começando com http:// ou https://';
+    if (gallery.length > MAX_ITEM_IMAGES) fieldErrors.image = `No máximo ${MAX_ITEM_IMAGES} imagens por produto.`;
+    else if (gallery.some((entry) => entry.kind === 'url' && !isHttpUrl(entry.url.trim()))) {
+      fieldErrors.image = 'Há uma URL de imagem inválida: use http:// ou https://.';
     }
     const nextCodeErrors = validateCodes(codes, showColors);
     const nextSpecErrors = validateSpecs(specs);
@@ -199,15 +202,15 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
           })),
           is_featured: form.is_featured,
           is_active: form.is_active,
-          image_url: image.mode === 'url' ? (image.url?.trim() ?? null) : null,
+
         },
-        newImageFile: image.mode === 'file' ? image.file : null,
+        gallery: gallery.map(({ key: _key, ...entry }) => entry),
+        // Só na edição as fotos anteriores pertencem a este produto e podem ser apagadas.
+        previousImages: mode === 'edit' && item ? itemImages(item) : [],
+        copyFromImages: mode === 'duplicate' && item ? itemImages(item) : [],
         swatchFiles: showColors
           ? codes.flatMap((row, index) => (row.swatchFile ? [{ index, file: row.swatchFile }] : []))
           : [],
-        // Só na edição a imagem anterior pertence a este produto e pode ser removida.
-        previousImageUrl: mode === 'edit' ? (item?.image_url ?? null) : null,
-        copyImageFromUrl: mode === 'duplicate' ? (item?.image_url ?? null) : null,
       });
       onSaved(result, mode);
     } catch (err) {
@@ -232,8 +235,8 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
           : undefined;
 
   const submitLabel = saving
-    ? image.mode === 'file'
-      ? 'Enviando imagem e salvando…'
+    ? gallery.some((entry) => entry.kind === 'file')
+      ? 'Enviando fotos e salvando…'
       : 'Salvando…'
     : mode === 'edit'
       ? 'Salvar alterações'
@@ -339,20 +342,20 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
         </fieldset>
 
         <fieldset disabled={saving}>
-          <legend>Imagem e busca</legend>
+          <legend>Fotos e busca</legend>
           <div className="g">
-            <div>
-              <ImageInput
-                value={image}
+            <div className="full">
+              <GalleryInput
+                value={gallery}
                 onChange={(next) => {
-                  setImage(next);
+                  setGallery(next);
                   setErrors((prev) => ({ ...prev, image: undefined }));
                 }}
                 disabled={saving}
                 error={errors.image ?? null}
               />
             </div>
-            <div>
+            <div className="full">
               <label htmlFor="item-tags">Tags de busca</label>
               <textarea
                 id="item-tags"

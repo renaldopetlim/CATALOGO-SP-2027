@@ -126,6 +126,7 @@ export type Database = {
           /** Mantida no banco, sem uso na interface atual. */
           price: number | null;
           image_url: string | null;
+          images: string[];
           tags: string[];
           specifications: Json;
           is_featured: boolean;
@@ -143,6 +144,7 @@ export type Database = {
           category_id: string;
           price?: number | null;
           image_url?: string | null;
+          images?: string[];
           tags?: string[];
           specifications?: Json;
           is_featured?: boolean;
@@ -160,6 +162,7 @@ export type Database = {
           category_id?: string;
           price?: number | null;
           image_url?: string | null;
+          images?: string[];
           tags?: string[];
           specifications?: Json;
           is_featured?: boolean;

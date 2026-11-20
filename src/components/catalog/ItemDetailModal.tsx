@@ -3,13 +3,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { colorOptions } from '../../lib/colors';
 import { useItemDetail } from '../../hooks/useItemDetail';
 import { useCatalogParams } from '../../hooks/useCatalogParams';
-import { BADGE_LABELS, type CatalogItemWithCategory } from '../../types/catalog';
+import { BADGE_LABELS, itemImages, type CatalogItemWithCategory } from '../../types/catalog';
 import { Modal } from '../ui/Modal';
 import { ErrorState } from '../ui/StateMessage';
 import { BrandLogo } from '../brand/BrandLogo';
 import { ColorPicker } from './ColorPicker';
 import { ColorSwatch } from './ColorSwatch';
-import { ItemImage } from './ItemImage';
+import { ProductGallery } from './ProductGallery';
 import type { ItemLinkState } from './ItemCard';
 
 function isItemLinkState(value: unknown): value is ItemLinkState {
@@ -71,10 +71,12 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
 
       {status === 'success' && item && (
         <article className="detail">
-          <div className="item-media">
-            <ItemImage src={item.image_url} alt={item.title} loading="eager" />
-            {item.badge && <span className="badge acc">{BADGE_LABELS[item.badge]}</span>}
-          </div>
+          <ProductGallery
+            key={item.id}
+            images={itemImages(item)}
+            title={item.title}
+            overlay={item.badge ? <span className="badge acc">{BADGE_LABELS[item.badge]}</span> : undefined}
+          />
 
           <div className="detail-info">
             <span className="label">{item.category.name}</span>

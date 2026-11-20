@@ -43,6 +43,8 @@ por qualquer um dos seus códigos.
      [docs/USUARIOS.md](docs/USUARIOS.md), que também explica a Edge Function `admin-users`).
    - `20261122000000_cores_tintas.sql`: cores (swatches) por código nas categorias marcadas com
      "Produtos com cores"; marca "Tintas e Complementos" automaticamente.
+   - `20261124000000_galeria_fotos.sql`: até 5 fotos por produto (`images`, a 1ª é a capa); a imagem atual
+     vira a capa.
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
@@ -177,6 +179,17 @@ No painel, em **Sistema interno**:
   De qualquer importação dá para **excluir os registros que ela criou**.
 
 A base do sistema só é visível para administradores.
+
+### Fotos do produto (até 5)
+
+No formulário de produto, **Fotos do produto** aceita até **5 imagens**, por upload (vários arquivos de uma
+vez ou arrastando) ou por URL, com o contador "N de 5 imagens adicionadas". A 1ª foto é a **capa**; cada foto
+tem **Definir como capa**, setas para reordenar e **Remover**. Ao salvar, os arquivos novos são enviados e as
+fotos removidas são apagadas do Storage; ao duplicar um produto, as fotos são copiadas.
+
+Na vitrine, o card mostra a capa e, com 2 ou mais fotos, o contador "1/4" e pontinhos: passar o mouse
+sobre a foto folheia as imagens. Nos detalhes, a galeria tem foto grande, setas, miniaturas, teclado (← →)
+e deslizar no celular.
 
 ### Cores (Tintas e Complementos)
 

@@ -5,6 +5,7 @@ import { deleteCatalogImage, isCatalogStorageUrl } from './storageService';
 import type { BrandSummary } from '../types/brands';
 import type { Json, TableUpdate } from '../types/database';
 import {
+  MAX_ITEM_IMAGES,
   isCatalogBadge,
   normalizeHex,
   parseSpecifications,
@@ -25,7 +26,7 @@ import {
  * pela coluna da categoria (`category.is_active`).
  */
 const ITEM_SELECT =
-  'id, title, brand, brand_id, badge, category_id, image_url, tags, specifications, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active, has_color_swatches), codes:catalog_item_codes(id, code, description, packaging, color_name, color_hex, color_swatch_url, sort_order), brand_ref:brands(id, name, logo_url)';
+  'id, title, brand, brand_id, badge, category_id, image_url, images, tags, specifications, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active, has_color_swatches), codes:catalog_item_codes(id, code, description, packaging, color_name, color_hex, color_swatch_url, sort_order), brand_ref:brands(id, name, logo_url)';
 
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
@@ -170,6 +171,17 @@ function cleanSpecifications(specs: Specification[]): Specification[] {
     .filter((spec) => spec.value.length > 0);
 }
 
+/** Galeria: sem vazias/repetidas, só http(s), no máximo `MAX_ITEM_IMAGES`. */
+function cleanImages(images: string[]): string[] {
+  const cleaned = [...new Set(images.map((url) => url.trim()).filter(Boolean))];
+  if (cleaned.length > MAX_ITEM_IMAGES) {
+    throw new ServiceError('validation', `Cada produto pode ter no máximo ${MAX_ITEM_IMAGES} imagens.`);
+  }
+  const invalid = cleaned.find((url) => !isHttpUrl(url));
+  if (invalid) throw new ServiceError('validation', 'Imagem inválida: use um endereço http:// ou https://.');
+  return cleaned;
+}
+
 /** Valida os blocos Código + Descrição + Embalagem (ao menos um; códigos únicos no produto). */
 function cleanCodes(codes: CatalogItemCodeInput[]): CatalogItemCodeInput[] {
   const cleaned = codes
@@ -229,7 +241,12 @@ export async function saveCatalogItemRecord(
       brand_id: input.brand_id || null,
       category_id: validateCategoryId(input.category_id),
       badge: input.badge ?? null,
-      image_url: validateImageUrl(input.image_url),
+      ...(input.images !== undefined
+        ? (() => {
+            const images = cleanImages(input.images);
+            return { images, image_url: images[0] ?? null };
+          })()
+        : { image_url: validateImageUrl(input.image_url) }),
       tags: cleanTags(input.tags ?? []),
       specifications: cleanSpecifications(input.specifications ?? []),
       is_featured: input.is_featured ?? false,
@@ -297,26 +314,28 @@ export function deactivateCatalogItem(id: string): Promise<CatalogItemWithCatego
  * Se a remoção da imagem falhar, o item continua excluído e `imageRemoved` = false.
  */
 export async function deleteCatalogItem(id: string): Promise<DeleteItemResult> {
-  let imageUrl: string | null;
+  let urls: string[];
 
   try {
-    const { data, error } = await supabase.from('catalog_items').delete().eq('id', id).select('image_url');
+    const { data, error } = await supabase.from('catalog_items').delete().eq('id', id).select('image_url, images');
     if (error) throw error;
 
     const deleted = data[0];
     if (!deleted) throw new ServiceError('not_found', 'Produto não encontrado ou sem permissão para excluí-lo.');
-    imageUrl = deleted.image_url;
+    urls = [...new Set([...(deleted.images ?? []), ...(deleted.image_url ? [deleted.image_url] : [])])];
   } catch (error) {
     throw toServiceError(error, 'excluir o produto');
   }
 
-  if (!imageUrl || !isCatalogStorageUrl(imageUrl)) return { imageRemoved: true };
-
-  try {
-    await deleteCatalogImage(imageUrl);
-    return { imageRemoved: true };
-  } catch (error) {
-    console.warn('Produto excluído, mas a imagem não pôde ser removida do Storage.', error);
-    return { imageRemoved: false };
+  // Remove todas as fotos do produto que estão no nosso bucket.
+  let imageRemoved = true;
+  for (const url of urls.filter((value) => isCatalogStorageUrl(value))) {
+    try {
+      await deleteCatalogImage(url);
+    } catch (error) {
+      console.warn('Produto excluído, mas uma imagem não pôde ser removida do Storage.', error);
+      imageRemoved = false;
+    }
   }
+  return { imageRemoved };
 }

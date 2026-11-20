@@ -68,7 +68,7 @@ modal de detalhes, recarregar a página ou compartilhar o link preserva o estado
 | Tabela | Papel |
 |---|---|
 | `categories` | Categorias da vitrine, ordenadas por `sort_order`; `has_color_swatches` liga as cores nos códigos (ex.: Tintas) |
-| `catalog_items` | Produtos: título, marca, selo, imagem, tags (ocultas), ficha técnica (`specifications` jsonb); `category_id` → `categories.id` (`ON DELETE RESTRICT`) |
+| `catalog_items` | Produtos: título, marca, selo, galeria `images` (até 5 URLs, a 1ª é a capa; `image_url` acompanha a capa), tags (ocultas), ficha técnica (`specifications` jsonb); `category_id` → `categories.id` (`ON DELETE RESTRICT`) |
 | `brands` | Marcas: nome (único, sem diferenciar maiúsculas), `logo_url` (pasta `brands/` do bucket), ativa/inativa. Visitante lê só as ativas |
 | `system_products` | Base importada do sistema interno: código (chave), descrição, marca; `updated_at` só muda quando o conteúdo muda. **Só admin** |
 | `system_products_reconciliation` (view) | Cada código da base com a situação no catálogo: `missing`, `inactive` ou `published` (`security_invoker`) |
