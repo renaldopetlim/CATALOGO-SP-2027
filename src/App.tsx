@@ -3,9 +3,11 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { RequirePermission } from './components/auth/RequirePermission';
 import { CatalogPage } from './pages/CatalogPage';
 import { HomePage } from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
+import { NewPasswordPage } from './pages/NewPasswordPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 // O painel só é baixado por quem acessa /admin (vitrine mais leve).
@@ -17,6 +19,7 @@ const AdminCategoriesPage = lazy(() =>
 const AdminBrandsPage = lazy(() => import('./pages/admin/AdminBrandsPage').then((m) => ({ default: m.AdminBrandsPage })));
 const AdminImportPage = lazy(() => import('./pages/admin/AdminImportPage').then((m) => ({ default: m.AdminImportPage })));
 const AdminCleanupPage = lazy(() => import('./pages/admin/AdminCleanupPage').then((m) => ({ default: m.AdminCleanupPage })));
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage').then((m) => ({ default: m.AdminUsersPage })));
 const AdminPendingPage = lazy(() => import('./pages/admin/AdminPendingPage').then((m) => ({ default: m.AdminPendingPage })));
 
 function AdminFallback() {
@@ -43,6 +46,7 @@ export default function App() {
             <Route index element={<HomePage />} />
             <Route path="catalogo" element={<CatalogPage />} />
             <Route path="login" element={<LoginPage />} />
+            <Route path="nova-senha" element={<NewPasswordPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
@@ -60,8 +64,30 @@ export default function App() {
             <Route path="categorias" element={<AdminCategoriesPage />} />
             <Route path="marcas" element={<AdminBrandsPage />} />
             <Route path="pendentes" element={<AdminPendingPage />} />
-            <Route path="importar" element={<AdminImportPage />} />
-            <Route path="limpeza" element={<AdminCleanupPage />} />
+            <Route
+              path="importar"
+              element={
+                <RequirePermission permission="can_import_spreadsheet" title="Importar planilha">
+                  <AdminImportPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="limpeza"
+              element={
+                <RequirePermission permission="can_cleanup_storage" title="Saúde e limpeza">
+                  <AdminCleanupPage />
+                </RequirePermission>
+              }
+            />
+            <Route
+              path="usuarios"
+              element={
+                <RequirePermission permission="can_manage_users" title="Usuários e permissões">
+                  <AdminUsersPage />
+                </RequirePermission>
+              }
+            />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

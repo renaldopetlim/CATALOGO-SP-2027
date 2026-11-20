@@ -11,14 +11,14 @@ type ProtectedRouteProps = {
 };
 
 /**
- * Libera o conteúdo apenas para administradores.
+ * Libera o conteúdo para quem tem acesso ATIVO ao painel (qualquer perfil).
  * - Sem sessão → /login (lembrando a página de origem)
  * - Logado sem permissão → aviso de acesso negado
  *
  * A segurança real está na RLS do banco: esta rota apenas evita exibir uma tela inútil.
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { status, isAdmin, adminError, user, signOut, recheckAdmin } = useAuth();
+  const { status, isAdmin, adminError, user, profile, signOut, recheckAdmin } = useAuth();
   const location = useLocation();
 
   if (status === 'loading' || (status === 'signed_in' && isAdmin === null)) {
@@ -48,7 +48,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     return (
       <main>
         <EmptyState
-          title="Acesso restrito"
+          title={profile ? 'Acesso bloqueado' : 'Acesso restrito'}
           action={
             <>
               <button type="button" className="sec btn-sm" onClick={() => void signOut()}>
@@ -60,8 +60,9 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             </>
           }
         >
-          A conta {user?.email ?? ''} não tem permissão de administrador. Peça a um administrador para liberar o
-          acesso.
+          {profile
+            ? `O acesso da conta ${user?.email ?? ''} ao painel está bloqueado. Fale com quem administra os usuários.`
+            : `A conta ${user?.email ?? ''} não tem acesso ao painel. Peça a quem administra os usuários para liberar o acesso.`}
         </EmptyState>
       </main>
     );

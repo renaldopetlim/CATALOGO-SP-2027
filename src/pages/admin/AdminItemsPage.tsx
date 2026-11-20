@@ -13,6 +13,8 @@ import { useAdminCategories } from '../../hooks/useAdminCategories';
 import { useCatalogItems } from '../../hooks/useCatalogItems';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../hooks/useToast';
+import { ReadOnlyNotice } from '../../components/auth/RequirePermission';
+import { usePermissions } from '../../hooks/usePermissions';
 import { isServiceError } from '../../lib/errors';
 import { deleteCatalogItem, setItemActive, setItemFeatured } from '../../services/catalogService';
 import { BADGE_LABELS, type CatalogItemWithCategory, type ItemStatusFilter } from '../../types/catalog';
@@ -74,6 +76,9 @@ export function AdminItemsPage() {
     { scope: 'admin', pageSize: 50, refetchOnFocus: false, live: true },
   );
   const { toast, show, dismiss } = useToast();
+  const { can, restrictedTitle } = usePermissions();
+  const canEdit = can('can_manage_products');
+  const lock = canEdit ? undefined : restrictedTitle('can_manage_products');
 
   const [editing, setEditing] = useState<Editing | null>(null);
   const [deleting, setDeleting] = useState<CatalogItemWithCategory | null>(null);
@@ -186,13 +191,14 @@ export function AdminItemsPage() {
           </>
         }
         action={
-          <button type="button" className="pri" onClick={() => setEditing({ mode: 'create', item: null })} disabled={noCategories}>
+          <button type="button" className="pri" onClick={() => setEditing({ mode: 'create', item: null })} disabled={noCategories || !canEdit} title={lock}>
             + Novo produto
           </button>
         }
       />
 
       <div className="admin-content">
+        <ReadOnlyNotice permission="can_manage_products" />
         {noCategories && (
           <div className="admin-pad">
             <EmptyState
@@ -255,9 +261,13 @@ export function AdminItemsPage() {
                       </div>
                     </td>
                     <td className="col-title">
-                      <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', item })}>
-                        {item.title}
-                      </button>
+                      {canEdit ? (
+                        <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', item })}>
+                          {item.title}
+                        </button>
+                      ) : (
+                        <span className="cell-strong">{item.title}</span>
+                      )}
                       <span className="cell-sub">
                         {item.badge && <span className="badge acc mini">{BADGE_LABELS[item.badge]}</span>}
                         {item.brand ?? 'Sem marca'}
@@ -276,7 +286,8 @@ export function AdminItemsPage() {
                         checked={item.is_active}
                         text={item.is_active ? 'Ativo' : 'Inativo'}
                         label={`${item.is_active ? 'Inativar' : 'Ativar'} “${item.title}”`}
-                        disabled={busy}
+                        disabled={busy || !canEdit}
+                        title={lock}
                         onChange={(next) =>
                           void runRowAction(
                             item,
@@ -292,7 +303,8 @@ export function AdminItemsPage() {
                         checked={item.is_featured}
                         text={item.is_featured ? 'Sim' : 'Não'}
                         label={`${item.is_featured ? 'Remover destaque de' : 'Destacar'} “${item.title}”`}
-                        disabled={busy}
+                        disabled={busy || !canEdit}
+                        title={lock}
                         onChange={(next) =>
                           void runRowAction(
                             item,
@@ -307,13 +319,13 @@ export function AdminItemsPage() {
                     </td>
                     <td className="col-actions">
                       <div className="row-actions">
-                        <button type="button" className="act" disabled={busy} onClick={() => setEditing({ mode: 'edit', item })}>
+                        <button type="button" className="act" disabled={busy || !canEdit} title={lock} onClick={() => setEditing({ mode: 'edit', item })}>
                           Editar
                         </button>
-                        <button type="button" className="act" disabled={busy} onClick={() => setEditing({ mode: 'duplicate', item })}>
+                        <button type="button" className="act" disabled={busy || !canEdit} title={lock} onClick={() => setEditing({ mode: 'duplicate', item })}>
                           Duplicar
                         </button>
-                        <button type="button" className="act danger-text" disabled={busy} onClick={() => setDeleting(item)}>
+                        <button type="button" className="act danger-text" disabled={busy || !canEdit} title={lock} onClick={() => setDeleting(item)}>
                           Excluir
                         </button>
                       </div>

@@ -11,6 +11,8 @@ import { Toast } from '../../components/ui/Toast';
 import { useAdminCategories } from '../../hooks/useAdminCategories';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../hooks/useToast';
+import { ReadOnlyNotice } from '../../components/auth/RequirePermission';
+import { usePermissions } from '../../hooks/usePermissions';
 import { isServiceError } from '../../lib/errors';
 import { stripAccents } from '../../lib/format';
 import { deleteCategory, reorderCategories, setCategoryActive } from '../../services/categoryService';
@@ -24,6 +26,9 @@ export function AdminCategoriesPage() {
   useDocumentTitle('Admin · Categorias');
   const { categories, status, error, reload, update } = useAdminCategories();
   const { toast, show, dismiss } = useToast();
+  const { can, restrictedTitle } = usePermissions();
+  const canEdit = can('can_manage_categories');
+  const lock = canEdit ? undefined : restrictedTitle('can_manage_categories');
 
   const [editing, setEditing] = useState<Editing | null>(null);
   const [deleting, setDeleting] = useState<CategoryWithItemCount | null>(null);
@@ -139,13 +144,14 @@ export function AdminCategoriesPage() {
           </>
         }
         action={
-          <button type="button" className="pri" onClick={() => setEditing({ mode: 'create' })}>
+          <button type="button" className="pri" onClick={() => setEditing({ mode: 'create' })} disabled={!canEdit} title={lock}>
             + Nova categoria
           </button>
         }
       />
 
       <div className="admin-content">
+        <ReadOnlyNotice permission="can_manage_categories" />
         {status === 'loading' && (
           <p className="admin-pad state" role="status">
             Carregando categorias…
@@ -195,7 +201,8 @@ export function AdminCategoriesPage() {
                           type="button"
                           className="act icon"
                           aria-label={`Mover ${category.name} para cima`}
-                          disabled={busy || filtering || index === 0}
+                          disabled={busy || filtering || !canEdit || index === 0}
+                          title={lock}
                           onClick={() => void move(index, -1)}
                         >
                           ↑
@@ -204,7 +211,8 @@ export function AdminCategoriesPage() {
                           type="button"
                           className="act icon"
                           aria-label={`Mover ${category.name} para baixo`}
-                          disabled={busy || filtering || index === categories.length - 1}
+                          disabled={busy || filtering || !canEdit || index === categories.length - 1}
+                          title={lock}
                           onClick={() => void move(index, 1)}
                         >
                           ↓
@@ -212,9 +220,13 @@ export function AdminCategoriesPage() {
                       </div>
                     </td>
                     <td className="col-title">
-                      <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', category })}>
-                        {category.name}
-                      </button>
+                      {canEdit ? (
+                        <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', category })}>
+                          {category.name}
+                        </button>
+                      ) : (
+                        <span className="cell-strong">{category.name}</span>
+                      )}
                       {category.description && <span className="cell-sub">{category.description}</span>}
                     </td>
                     <td className="col-mono">/{category.slug}</td>
@@ -228,7 +240,8 @@ export function AdminCategoriesPage() {
                         checked={category.is_active}
                         text={category.is_active ? 'Ativa' : 'Inativa'}
                         label={`${category.is_active ? 'Inativar' : 'Ativar'} a categoria “${category.name}”`}
-                        disabled={busy}
+                        disabled={busy || !canEdit}
+                        title={lock}
                         onChange={(next) => void toggleActive(category, next)}
                       />
                     </td>
@@ -237,10 +250,10 @@ export function AdminCategoriesPage() {
                     </td>
                     <td className="col-actions">
                       <div className="row-actions">
-                        <button type="button" className="act" disabled={busy} onClick={() => setEditing({ mode: 'edit', category })}>
+                        <button type="button" className="act" disabled={busy || !canEdit} title={lock} onClick={() => setEditing({ mode: 'edit', category })}>
                           Editar
                         </button>
-                        <button type="button" className="act danger-text" disabled={busy} onClick={() => setDeleting(category)}>
+                        <button type="button" className="act danger-text" disabled={busy || !canEdit} title={lock} onClick={() => setDeleting(category)}>
                           Excluir
                         </button>
                       </div>

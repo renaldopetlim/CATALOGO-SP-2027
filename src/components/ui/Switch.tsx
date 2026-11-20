@@ -8,17 +8,19 @@ type SwitchProps = {
   disabled?: boolean;
   /** `featured` usa a cor de destaque (laranja). */
   tone?: 'default' | 'featured';
+  /** Dica no hover (padrão: o rótulo). Ex.: motivo de estar desabilitado. */
+  title?: string;
 };
 
 /** Alternador acessível (role="switch") para ações rápidas na tabela. */
-export function Switch({ checked, onChange, label, text, disabled = false, tone = 'default' }: SwitchProps) {
+export function Switch({ checked, onChange, label, text, disabled = false, tone = 'default', title }: SwitchProps) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       aria-label={label}
-      title={label}
+      title={title ?? label}
       disabled={disabled}
       className={`switch${tone === 'featured' ? ' featured' : ''}`}
       onClick={() => onChange(!checked)}

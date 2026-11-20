@@ -13,6 +13,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useReconciliation } from '../../hooks/useReconciliation';
 import { usePendingSelection, type HeaderCheckState } from '../../hooks/usePendingSelection';
 import { useToast } from '../../hooks/useToast';
+import { usePermissions } from '../../hooks/usePermissions';
 import { notifyCleanupChanged } from '../../lib/cleanupEvents';
 import { isServiceError } from '../../lib/errors';
 import { buildPrefill } from '../../lib/pendingGroup';
@@ -104,6 +105,11 @@ export function AdminPendingPage() {
   });
   const categories = useAdminCategories();
   const { toast, show, dismiss } = useToast();
+  const { can, restrictedTitle } = usePermissions();
+  const createLock = can('can_manage_products') ? undefined : restrictedTitle('can_manage_products');
+  const deleteLock = can('can_import_spreadsheet') ? undefined : restrictedTitle('can_import_spreadsheet');
+  // Marcar linhas só serve para criar card ou excluir: sem nenhuma das duas, não há seleção.
+  const canSelect = !createLock || !deleteLock;
   const [creating, setCreating] = useState<Creating | null>(null);
   const visibleRows = list?.rows ?? [];
   const selection = usePendingSelection(visibleRows);
@@ -232,7 +238,7 @@ export function AdminPendingPage() {
               <thead>
                 <tr>
                   <th scope="col" className="col-check">
-                    <HeaderCheckbox state={selection.headerState} disabled={visibleRows.length === 0} onToggle={selection.toggleVisible} />
+                    <HeaderCheckbox state={selection.headerState} disabled={visibleRows.length === 0 || !canSelect} onToggle={selection.toggleVisible} />
                   </th>
                   <th scope="col">Código</th>
                   <th scope="col">Descrição</th>
@@ -255,6 +261,7 @@ export function AdminPendingPage() {
                           type="checkbox"
                           className="row-check"
                           checked={checked}
+                          disabled={!canSelect}
                           // onClick (e não onChange) para ler o Shift: marca um intervalo.
                           onClick={onCheckClick(row)}
                           onChange={() => undefined}
@@ -277,7 +284,13 @@ export function AdminPendingPage() {
                       <td className="col-actions">
                         <div className="row-actions">
                           {row.status === 'missing' ? (
-                            <button type="button" className="act act-pri" onClick={() => setCreating({ source: 'row', rows: [row] })}>
+                            <button
+                              type="button"
+                              className="act act-pri"
+                              disabled={!!createLock}
+                              title={createLock}
+                              onClick={() => setCreating({ source: 'row', rows: [row] })}
+                            >
                               + Cadastrar no catálogo
                             </button>
                           ) : (
@@ -289,7 +302,8 @@ export function AdminPendingPage() {
                             type="button"
                             className="act icon danger-text"
                             aria-label={`Excluir ${row.code} da base`}
-                            title="Excluir da base do sistema"
+                            title={deleteLock ?? 'Excluir da base do sistema'}
+                            disabled={!!deleteLock}
                             onClick={() => setDeleting({ source: 'row', rows: [row] })}
                           >
                             <TrashIcon />
@@ -325,6 +339,8 @@ export function AdminPendingPage() {
           cardRows={selection.cardRows}
           hiddenCount={selection.hiddenCount}
           busy={deletingBusy}
+          createLock={createLock}
+          deleteLock={deleteLock}
           onCreate={() => setCreating({ source: 'selection', rows: selection.cardRows })}
           onDelete={() => setDeleting({ source: 'selection', rows: selectedRows })}
           onClear={selection.clear}

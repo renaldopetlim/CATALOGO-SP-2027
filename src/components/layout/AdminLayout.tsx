@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useCleanupBadge } from '../../hooks/useCleanupBadge';
+import { usePermissions } from '../../hooks/usePermissions';
+import { ROLE_INFO } from '../../types/users';
 import { assetUrl, SITE_ROOT_URL } from '../../lib/assets';
 import { LiveIndicator } from '../ui/LiveIndicator';
 // CSS só do painel: fica no pacote carregado sob demanda, a vitrine não o recebe.
@@ -22,6 +24,8 @@ const ICONS = {
   pending: 'M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
   upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
   cleanup: 'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6',
+  users: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+  key: 'M21 2l-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.78 7.78 5.5 5.5 0 0 1 7.78-7.78zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4',
   store: 'M14 3h7v7M10 14 21 3M21 14v7H3V3h7',
   logout: 'M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3',
 };
@@ -31,7 +35,11 @@ export function AdminLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
-  const cleanupCount = useCleanupBadge();
+  const { can, profile } = usePermissions();
+  const canImport = can('can_import_spreadsheet');
+  const canCleanup = can('can_cleanup_storage');
+  const canUsers = can('can_manage_users');
+  const cleanupCount = useCleanupBadge(canCleanup);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -75,20 +83,33 @@ export function AdminLayout() {
             <NavIcon path={ICONS.pending} />
             Pendentes no catálogo
           </NavLink>
-          <NavLink to="/admin/importar">
-            <NavIcon path={ICONS.upload} />
-            Importar planilha
-          </NavLink>
-          <NavLink to="/admin/limpeza">
-            <NavIcon path={ICONS.cleanup} />
-            Saúde e limpeza
-            {cleanupCount > 0 && (
-              <span className="sb-badge" title="Arquivos e registros sem uso">
-                {cleanupCount > 99 ? '99+' : cleanupCount}
-                <span className="sr-only"> itens para limpar</span>
-              </span>
-            )}
-          </NavLink>
+          {canImport && (
+            <NavLink to="/admin/importar">
+              <NavIcon path={ICONS.upload} />
+              Importar planilha
+            </NavLink>
+          )}
+          {canCleanup && (
+            <NavLink to="/admin/limpeza">
+              <NavIcon path={ICONS.cleanup} />
+              Saúde e limpeza
+              {cleanupCount > 0 && (
+                <span className="sb-badge" title="Arquivos e registros sem uso">
+                  {cleanupCount > 99 ? '99+' : cleanupCount}
+                  <span className="sr-only"> itens para limpar</span>
+                </span>
+              )}
+            </NavLink>
+          )}
+          {canUsers && (
+            <>
+              <span className="sb-section">Acesso</span>
+              <NavLink to="/admin/usuarios">
+                <NavIcon path={ICONS.users} />
+                Usuários e permissões
+              </NavLink>
+            </>
+          )}
           <span className="sb-section">Vitrine</span>
           <a href={SITE_ROOT_URL} target="_blank" rel="noopener">
             <NavIcon path={ICONS.store} />
@@ -103,10 +124,17 @@ export function AdminLayout() {
           </div>
           <div className="sb-user" title={user?.email ?? undefined}>
             <span className="sb-avatar" aria-hidden="true">
-              {(user?.email ?? '?').charAt(0).toUpperCase()}
+              {(profile?.full_name || user?.email || '?').charAt(0).toUpperCase()}
             </span>
-            <span className="sb-email">{user?.email}</span>
+            <span className="sb-who">
+              <span className="sb-email">{profile?.full_name || user?.email}</span>
+              {profile && <span className="sb-role">{ROLE_INFO[profile.role].label}</span>}
+            </span>
           </div>
+          <NavLink to="/nova-senha" className="sb-password">
+            <NavIcon path={ICONS.key} />
+            Alterar minha senha
+          </NavLink>
           <button type="button" className="sb-logout" onClick={() => void handleSignOut()} disabled={signingOut}>
             <NavIcon path={ICONS.logout} />
             {signingOut ? 'Saindo…' : 'Sair'}

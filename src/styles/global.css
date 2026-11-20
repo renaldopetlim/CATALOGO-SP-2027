@@ -1225,3 +1225,23 @@ input[type="file"] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Login: "Esqueci minha senha" / voltar */
+.login-alt {
+  margin-top: 14px;
+  font-size: 0.9rem;
+}
+
+.login-alt .tb-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--acc);
+  cursor: pointer;
+}
+
+.login-alt .tb-link:hover {
+  text-decoration: underline;
+}
