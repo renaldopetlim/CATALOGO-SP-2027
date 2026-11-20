@@ -573,7 +573,7 @@ begin
     raise exception 'Sem permissão para importar planilhas.' using errcode = '42501';
   end if;
 
-  delete from public.import_batch_items;
+  delete from public.import_batch_items where batch_id is not null; -- WHERE exigido pelo pg_safeupdate do Supabase
 
   insert into public.import_batches (file_name)
   values (left(coalesce(nullif(btrim(p_file_name), ''), 'planilha'), 255))
