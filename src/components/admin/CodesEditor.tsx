@@ -1,4 +1,5 @@
 import { useId } from 'react';
+import { ColorFields } from './ColorFields';
 import { newCodeRow, type CodeRow } from './editorRows';
 
 type CodesEditorProps = {
@@ -7,13 +8,15 @@ type CodesEditorProps = {
   /** Erro por linha (índice → mensagem). */
   errors?: Record<number, string>;
   disabled?: boolean;
+  /** Categoria com cores (ex.: Tintas): mostra nome da cor, cor e amostra em cada código. */
+  showColors?: boolean;
 };
 
 /**
  * Blocos Código + Descrição + Embalagem do produto.
  * Sempre mantém ao menos uma linha; a ordem aqui é a ordem na vitrine.
  */
-export function CodesEditor({ rows, onChange, errors = {}, disabled = false }: CodesEditorProps) {
+export function CodesEditor({ rows, onChange, errors = {}, disabled = false, showColors = false }: CodesEditorProps) {
   const baseId = useId();
 
   const update = (index: number, patch: Partial<CodeRow>) =>
@@ -30,7 +33,7 @@ export function CodesEditor({ rows, onChange, errors = {}, disabled = false }: C
   };
 
   return (
-    <div className="rows-editor codes-editor">
+    <div className={`rows-editor codes-editor${showColors ? ' with-colors' : ''}`}>
       <div className="rows-head" aria-hidden="true">
         <span>Código *</span>
         <span>Descrição</span>
@@ -108,6 +111,7 @@ export function CodesEditor({ rows, onChange, errors = {}, disabled = false }: C
               </button>
             </div>
             {error && <div className="msg rows-error">{error}</div>}
+            {showColors && <ColorFields row={row} index={index} disabled={disabled} onChange={(patch) => update(index, patch)} />}
           </div>
         );
       })}

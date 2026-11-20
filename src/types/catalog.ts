@@ -42,8 +42,25 @@ export function parseSpecifications(json: Json): Specification[] {
 /** Código (variação) do produto: tamanho, bitola, cor, voltagem… */
 export type CatalogItemCode = Pick<
   TableRow<'catalog_item_codes'>,
-  'id' | 'code' | 'description' | 'packaging' | 'sort_order'
+  'id' | 'code' | 'description' | 'packaging' | 'color_name' | 'color_hex' | 'color_swatch_url' | 'sort_order'
 >;
+
+/** Código com cor visual (nome, hexadecimal e/ou imagem de amostra). */
+export function hasColor(code: Pick<CatalogItemCode, 'color_name' | 'color_hex' | 'color_swatch_url'>): boolean {
+  return Boolean(code.color_hex || code.color_swatch_url);
+}
+
+/** `#RRGGBB` válido (o banco grava sempre assim). */
+export function isHexColor(value: string): boolean {
+  return /^#[0-9A-Fa-f]{6}$/.test(value);
+}
+
+/** Aceita "#abc", "abc", "#aabbcc" ou "aabbcc" → "#AABBCC"; `null` se inválido ou vazio. */
+export function normalizeHex(value: string): string | null {
+  let hex = value.trim().replace(/^#/, '').toUpperCase();
+  if (/^[0-9A-F]{3}$/.test(hex)) hex = hex.replace(/./g, (char) => char + char);
+  return /^[0-9A-F]{6}$/.test(hex) ? `#${hex}` : null;
+}
 
 /* ==========================================================================
    ENTIDADES
@@ -67,7 +84,7 @@ export type CatalogItem = Omit<TableRow<'catalog_items'>, 'search_text' | 'price
 };
 
 /** Resumo da categoria embutido em cada produto. */
-export type CategorySummary = Pick<Category, 'id' | 'name' | 'slug' | 'is_active'>;
+export type CategorySummary = Pick<Category, 'id' | 'name' | 'slug' | 'is_active' | 'has_color_swatches'>;
 
 /** Produto com categoria, marca (com logo) e códigos (ordenados por `sort_order`). */
 export type CatalogItemWithCategory = CatalogItem & {
@@ -92,6 +109,8 @@ export type CreateCategoryInput = {
   /** Opcional: vai para o fim da lista quando omitido. */
   sort_order?: number;
   is_active?: boolean;
+  /** Mostra cores (swatches) nos códigos, no painel e na vitrine (ex.: Tintas). */
+  has_color_swatches?: boolean;
 };
 
 export type UpdateCategoryInput = Partial<CreateCategoryInput>;
@@ -103,6 +122,10 @@ export type CatalogItemCodeInput = {
   code: string;
   description?: string | null;
   packaging?: string | null;
+  /** Só em categorias com cores (`has_color_swatches`). */
+  color_name?: string | null;
+  color_hex?: string | null;
+  color_swatch_url?: string | null;
 };
 
 /** Gravação completa do produto (criar ou editar), sempre com seus códigos. */

@@ -16,6 +16,11 @@ export type SaveItemParams = {
    * mesma imagem do bucket, ela é copiada para um arquivo próprio.
    */
   copyImageFromUrl?: string | null;
+  /**
+   * Amostras de cor escolhidas agora (categorias com cores): `index` é a posição
+   * do código em `input.codes`. Enviadas para a pasta `swatches/` antes de gravar.
+   */
+  swatchFiles?: Array<{ index: number; file: File }>;
 };
 
 export type SaveItemResult = {
@@ -37,9 +42,38 @@ export async function saveCatalogItem({
   newImageFile = null,
   previousImageUrl = null,
   copyImageFromUrl = null,
+  swatchFiles = [],
 }: SaveItemParams): Promise<SaveItemResult> {
   const warnings: string[] = [];
   let uploadedUrl: string | null = null;
+  const uploadedSwatches: string[] = [];
+
+  // Remove o que foi enviado nesta tentativa (falha ao gravar o produto).
+  const discardUploads = async () => {
+    for (const url of [uploadedUrl, ...uploadedSwatches]) {
+      if (!url) continue;
+      await deleteCatalogImage(url).catch((cleanupError: unknown) => {
+        console.warn('Falha ao remover arquivo enviado após erro ao salvar o item.', cleanupError);
+      });
+    }
+  };
+
+  let codes = input.codes;
+  if (swatchFiles.length > 0) {
+    try {
+      codes = [...input.codes];
+      for (const { index, file } of swatchFiles) {
+        const target = codes[index];
+        if (!target) continue;
+        const uploaded = await uploadCatalogImage(file, 'swatches');
+        uploadedSwatches.push(uploaded.publicUrl);
+        codes[index] = { ...target, color_swatch_url: uploaded.publicUrl };
+      }
+    } catch (error) {
+      await discardUploads();
+      throw toServiceError(error, 'enviar a amostra de cor');
+    }
+  }
 
   if (newImageFile) {
     const uploaded = await uploadCatalogImage(newImageFile);
@@ -53,18 +87,14 @@ export async function saveCatalogItem({
     uploadedUrl = copied.publicUrl;
   }
 
-  const payload: SaveCatalogItemInput = uploadedUrl ? { ...input, image_url: uploadedUrl } : input;
+  const payload: SaveCatalogItemInput = { ...input, codes, ...(uploadedUrl ? { image_url: uploadedUrl } : {}) };
 
   let item: CatalogItemWithCategory;
   try {
     // Produto + códigos numa única transação.
     item = await saveCatalogItemRecord(id ?? null, payload);
   } catch (error) {
-    if (uploadedUrl) {
-      await deleteCatalogImage(uploadedUrl).catch((cleanupError: unknown) => {
-        console.warn('Falha ao remover imagem enviada após erro ao salvar o item.', cleanupError);
-      });
-    }
+    await discardUploads();
     throw toServiceError(error, id ? 'salvar o produto' : 'criar o produto');
   }
 

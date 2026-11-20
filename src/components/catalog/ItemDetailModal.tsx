@@ -1,10 +1,14 @@
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { colorOptions } from '../../lib/colors';
 import { useItemDetail } from '../../hooks/useItemDetail';
 import { useCatalogParams } from '../../hooks/useCatalogParams';
 import { BADGE_LABELS, type CatalogItemWithCategory } from '../../types/catalog';
 import { Modal } from '../ui/Modal';
 import { ErrorState } from '../ui/StateMessage';
 import { BrandLogo } from '../brand/BrandLogo';
+import { ColorPicker } from './ColorPicker';
+import { ColorSwatch } from './ColorSwatch';
 import { ItemImage } from './ItemImage';
 import type { ItemLinkState } from './ItemCard';
 
@@ -29,6 +33,9 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
 
   const initial = itemId ? (loadedItems.find((item) => item.id === itemId) ?? null) : null;
   const { item, status, error, reload } = useItemDetail(itemId, initial);
+  // Cor escolhida no seletor (por produto: trocar de produto zera a escolha).
+  const [picked, setPicked] = useState<{ itemId: string; key: string } | null>(null);
+  const [onlyPicked, setOnlyPicked] = useState(false);
 
   if (!itemId) return null;
 
@@ -38,6 +45,13 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
     if (isItemLinkState(location.state)) navigate(-1);
     else closeItem();
   };
+
+  const colors = item?.category.has_color_swatches ? colorOptions(item.codes) : [];
+  const pickedKey = item && picked?.itemId === item.id ? picked.key : null;
+  const pickedColor = colors.find((color) => color.key === pickedKey) ?? null;
+  const pickedCodes = new Set(pickedColor?.codes.map((code) => code.id) ?? []);
+  const visibleCodes = item ? (pickedColor && onlyPicked ? item.codes.filter((code) => pickedCodes.has(code.id)) : item.codes) : [];
+  const showColorColumn = colors.length > 0;
 
   return (
     <Modal title={item?.title ?? 'Detalhes do produto'} onClose={close} size="wide">
@@ -87,25 +101,63 @@ export function ItemDetailModal({ loadedItems = [] }: ItemDetailModalProps) {
                 </dl>
               </div>
             )}
+
+            {colors.length > 0 && (
+              <ColorPicker
+                colors={colors}
+                selected={pickedKey}
+                onSelect={(key) => {
+                  setPicked(key ? { itemId: item.id, key } : null);
+                  if (!key) setOnlyPicked(false);
+                }}
+              />
+            )}
           </div>
 
           {item.codes.length > 0 && (
             <div className="detail-codes">
-              <span className="label">
-                {item.codes.length === 1 ? 'Código' : `Códigos disponíveis (${item.codes.length})`}
-              </span>
+              <div className="codes-head">
+                <span className="label">
+                  {item.codes.length === 1 ? 'Código' : `Códigos disponíveis (${item.codes.length})`}
+                </span>
+                {pickedColor && (
+                  <label className="check codes-filter">
+                    <input type="checkbox" checked={onlyPicked} onChange={(e) => setOnlyPicked(e.target.checked)} />
+                    Só “{pickedColor.name}”
+                  </label>
+                )}
+              </div>
               <div className="codes-scroll">
                 <table className="codes-table">
                   <thead>
                     <tr>
+                      {showColorColumn && <th scope="col">Cor</th>}
                       <th scope="col">Código</th>
                       <th scope="col">Descrição</th>
                       <th scope="col">Embalagem</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {item.codes.map((code) => (
-                      <tr key={code.id}>
+                    {visibleCodes.map((code) => (
+                      <tr key={code.id} className={pickedCodes.has(code.id) ? 'is-picked' : undefined}>
+                        {showColorColumn && (
+                          <td className="color-cell">
+                            {code.color_hex || code.color_swatch_url ? (
+                              <span className="color-cell-inner">
+                                <ColorSwatch
+                                  hex={code.color_hex}
+                                  imageUrl={code.color_swatch_url}
+                                  name={code.color_name ?? code.color_hex ?? 'Cor'}
+                                  size="xs"
+                                  decorative
+                                />
+                                {code.color_name ?? code.color_hex}
+                              </span>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
+                        )}
                         <td className="code-cell">{code.code}</td>
                         <td>{code.description ?? '—'}</td>
                         <td>{code.packaging ?? '—'}</td>

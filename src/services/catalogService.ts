@@ -6,6 +6,7 @@ import type { BrandSummary } from '../types/brands';
 import type { Json, TableUpdate } from '../types/database';
 import {
   isCatalogBadge,
+  normalizeHex,
   parseSpecifications,
   type CatalogFilters,
   type CatalogItemCodeInput,
@@ -24,7 +25,7 @@ import {
  * pela coluna da categoria (`category.is_active`).
  */
 const ITEM_SELECT =
-  'id, title, brand, brand_id, badge, category_id, image_url, tags, specifications, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active), codes:catalog_item_codes(id, code, description, packaging, sort_order), brand_ref:brands(id, name, logo_url)';
+  'id, title, brand, brand_id, badge, category_id, image_url, tags, specifications, is_featured, is_active, created_at, updated_at, category:categories!inner(id, name, slug, is_active, has_color_swatches), codes:catalog_item_codes(id, code, description, packaging, color_name, color_hex, color_swatch_url, sort_order), brand_ref:brands(id, name, logo_url)';
 
 const DEFAULT_LIMIT = 24;
 const MAX_LIMIT = 100;
@@ -177,8 +178,12 @@ function cleanCodes(codes: CatalogItemCodeInput[]): CatalogItemCodeInput[] {
       code: entry.code.trim().toUpperCase(),
       description: emptyToNull(entry.description),
       packaging: emptyToNull(entry.packaging),
+      color_name: emptyToNull(entry.color_name),
+      color_hex: entry.color_hex ? normalizeHex(entry.color_hex) : null,
+      color_swatch_url: emptyToNull(entry.color_swatch_url),
+      invalidHex: Boolean(entry.color_hex?.trim()) && !normalizeHex(entry.color_hex ?? ''),
     }))
-    .filter((entry) => entry.code || entry.description || entry.packaging);
+    .filter((entry) => entry.code || entry.description || entry.packaging || entry.color_name || entry.color_hex || entry.color_swatch_url);
 
   if (cleaned.length === 0) {
     throw new ServiceError('validation', 'Informe ao menos um código para o produto.');
@@ -187,6 +192,14 @@ function cleanCodes(codes: CatalogItemCodeInput[]): CatalogItemCodeInput[] {
   if (missing >= 0) {
     throw new ServiceError('validation', `Preencha o código da linha ${missing + 1}.`);
   }
+  const badHex = cleaned.find((entry) => entry.invalidHex);
+  if (badHex) {
+    throw new ServiceError('validation', `Cor inválida no código ${badHex.code}. Use o formato #RRGGBB.`);
+  }
+  const badUrl = cleaned.find((entry) => entry.color_swatch_url && !isHttpUrl(entry.color_swatch_url));
+  if (badUrl) {
+    throw new ServiceError('validation', `A amostra do código ${badUrl.code} precisa ser um endereço http:// ou https://.`);
+  }
   const seen = new Set<string>();
   for (const entry of cleaned) {
     if (seen.has(entry.code)) {
@@ -194,7 +207,7 @@ function cleanCodes(codes: CatalogItemCodeInput[]): CatalogItemCodeInput[] {
     }
     seen.add(entry.code);
   }
-  return cleaned;
+  return cleaned.map(({ invalidHex: _invalid, ...entry }) => entry);
 }
 
 /* ==========================================================================

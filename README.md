@@ -41,6 +41,8 @@ por qualquer um dos seus códigos.
      registros da base e análise de registros e arquivos sem uso.
    - `20261121000000_usuarios_permissoes.sql`: usuários do painel com permissões granulares (veja
      [docs/USUARIOS.md](docs/USUARIOS.md), que também explica a Edge Function `admin-users`).
+   - `20261122000000_cores_tintas.sql`: cores (swatches) por código nas categorias marcadas com
+     "Produtos com cores"; marca "Tintas e Complementos" automaticamente.
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
@@ -175,6 +177,17 @@ No painel, em **Sistema interno**:
   De qualquer importação dá para **excluir os registros que ela criou**.
 
 A base do sistema só é visível para administradores.
+
+### Cores (Tintas e Complementos)
+
+Categorias marcadas com **Produtos com cores** (no cadastro da categoria; "Tintas e Complementos" já vem
+marcada) ganham, em cada código do produto, **nome da cor**, **cor** (seletor + hexadecimal, com prévia) e
+**amostra/textura** opcional (upload ou URL, para metálicos, acetinados e texturas). Nas outras categorias
+esses campos não aparecem e, se a categoria do produto for trocada, as cores são limpas ao salvar.
+
+Na vitrine, o card mostra uma mini paleta (até 7 cores + "+N cores"). Nos detalhes, um seletor de cores
+mostra nome, código, descrição e embalagem da cor escolhida, destaca as linhas dela na tabela de códigos e
+permite ver só essa cor. A busca encontra produtos pelo nome da cor.
 
 ### Saúde e limpeza
 

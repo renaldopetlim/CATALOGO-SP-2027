@@ -9,6 +9,7 @@ import {
   type CatalogBadge,
   type Category,
   type CatalogItemWithCategory,
+  normalizeHex,
   type ItemFormPrefill,
 } from '../../types/catalog';
 import { Drawer } from '../ui/Drawer';
@@ -79,21 +80,22 @@ function initialCodes(
     );
   }
   if (!item || item.codes.length === 0) return [newCodeRow()];
-  return item.codes.map((code) =>
-    mode === 'duplicate'
-      ? // Códigos são únicos: a cópia mantém descrição e embalagem, com o código em branco.
-        newCodeRow({ description: code.description ?? '', packaging: code.packaging ?? '' })
-      : newCodeRow({ id: code.id, code: code.code, description: code.description ?? '', packaging: code.packaging ?? '' }),
-  );
+  return item.codes.map((code) => {
+    const color = { colorName: code.color_name ?? '', colorHex: code.color_hex ?? '', swatchUrl: code.color_swatch_url ?? '' };
+    return mode === 'duplicate'
+      ? // Códigos são únicos: a cópia mantém descrição, embalagem e cor, com o código em branco.
+        newCodeRow({ description: code.description ?? '', packaging: code.packaging ?? '', ...color })
+      : newCodeRow({ id: code.id, code: code.code, description: code.description ?? '', packaging: code.packaging ?? '', ...color });
+  });
 }
 
 /** Validação local das linhas de código: obrigatório e sem repetição no mesmo produto. */
-function validateCodes(rows: CodeRow[]): Record<number, string> {
+function validateCodes(rows: CodeRow[], checkColors: boolean): Record<number, string> {
   const errors: Record<number, string> = {};
   const seen = new Map<string, number>();
   rows.forEach((row, index) => {
     const code = row.code.trim().toUpperCase();
-    const filled = code || row.description.trim() || row.packaging.trim();
+    const filled = code || row.description.trim() || row.packaging.trim() || row.colorName.trim() || row.colorHex.trim();
     if (!filled && rows.length > 1) return; // linha totalmente vazia é ignorada
     if (!code) {
       errors[index] = 'Informe o código.';
@@ -102,6 +104,10 @@ function validateCodes(rows: CodeRow[]): Record<number, string> {
     const first = seen.get(code);
     if (first !== undefined) errors[index] = `Código repetido (linha ${first + 1}).`;
     else seen.set(code, index);
+    if (checkColors && row.colorHex.trim() && !normalizeHex(row.colorHex)) errors[index] = 'Cor inválida: use o formato #RRGGBB.';
+    else if (checkColors && !row.swatchFile && row.swatchUrl.trim() && !isHttpUrl(row.swatchUrl.trim())) {
+      errors[index] = 'A amostra precisa ser um endereço http:// ou https://.';
+    }
   });
   return errors;
 }
@@ -134,6 +140,9 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // Categoria com cores (ex.: Tintas e Complementos): campos de cor em cada código.
+  const showColors = categories.find((category) => category.id === form.category_id)?.has_color_swatches === true;
+
   const setBrandId = useCallback((brandId: string) => {
     setForm((prev) => ({ ...prev, brand_id: brandId }));
     setSubmitError(null);
@@ -154,7 +163,7 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
     if (image.mode === 'url' && image.url && !isHttpUrl(image.url.trim())) {
       fieldErrors.image = 'Informe uma URL começando com http:// ou https://';
     }
-    const nextCodeErrors = validateCodes(codes);
+    const nextCodeErrors = validateCodes(codes, showColors);
     const nextSpecErrors = validateSpecs(specs);
     if (Object.keys(nextCodeErrors).length > 0) fieldErrors.codes = 'Revise os códigos destacados.';
 
@@ -178,12 +187,24 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
           badge: form.badge || null,
           tags: parseTagsInput(form.tags),
           specifications: specs.map(({ label, value }) => ({ label, value })),
-          codes: codes.map(({ id, code, description, packaging }) => ({ ...(id ? { id } : {}), code, description, packaging })),
+          // Cores só valem em categorias com cores; nas demais, são limpas ao salvar.
+          codes: codes.map(({ id, code, description, packaging, colorName, colorHex, swatchUrl, swatchFile }) => ({
+            ...(id ? { id } : {}),
+            code,
+            description,
+            packaging,
+            color_name: showColors ? colorName : null,
+            color_hex: showColors ? colorHex : null,
+            color_swatch_url: showColors && !swatchFile ? swatchUrl : null,
+          })),
           is_featured: form.is_featured,
           is_active: form.is_active,
           image_url: image.mode === 'url' ? (image.url?.trim() ?? null) : null,
         },
         newImageFile: image.mode === 'file' ? image.file : null,
+        swatchFiles: showColors
+          ? codes.flatMap((row, index) => (row.swatchFile ? [{ index, file: row.swatchFile }] : []))
+          : [],
         // Só na edição a imagem anterior pertence a este produto e pode ser removida.
         previousImageUrl: mode === 'edit' ? (item?.image_url ?? null) : null,
         copyImageFromUrl: mode === 'duplicate' ? (item?.image_url ?? null) : null,
@@ -291,13 +312,20 @@ export function ItemForm({ mode, item, categories, defaultCategoryId = null, pre
         </fieldset>
 
         <fieldset disabled={saving}>
-          <legend>Códigos, descrição e embalagem</legend>
+          <legend>{showColors ? 'Códigos, cores e embalagem' : 'Códigos, descrição e embalagem'}</legend>
           <p className="hint fieldset-hint">
             Um produto pode ter vários códigos (tamanho, bitola, cor, voltagem…). Cada código é único no catálogo e também
             é encontrado pela busca.
           </p>
+          {showColors && (
+            <p className="hint fieldset-hint">
+              Esta categoria mostra cores na vitrine: informe o nome e a cor de cada código. A amostra (imagem) é opcional, para
+              texturas, metálicos e acetinados. O nome da cor também é encontrado pela busca.
+            </p>
+          )}
           <CodesEditor
             rows={codes}
+            showColors={showColors}
             onChange={(next) => {
               setCodes(next);
               setCodeErrors({});
