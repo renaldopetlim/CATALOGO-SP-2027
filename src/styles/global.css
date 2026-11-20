@@ -1429,3 +1429,174 @@ input[type="file"] {
 .codes-table tr.is-picked td:first-child {
   box-shadow: inset 3px 0 0 var(--acc);
 }
+
+/* ==========================================================================
+   Galeria de fotos do produto (até 5)
+   ========================================================================== */
+
+/* Card: contador e pontinhos (folhear passando o mouse) */
+.photo-count {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(23, 38, 77, 0.78);
+  color: var(--white);
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.photo-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  display: flex;
+  gap: 4px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.photo-dots > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(23, 38, 77, 0.28);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.photo-dots > span.on {
+  background: var(--acc);
+  transform: scale(1.25);
+}
+
+/* Detalhes: foto grande + miniaturas */
+.product-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.gallery-main {
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.gallery-frame {
+  width: 100%;
+  height: 100%;
+  animation: galleryFade 0.25s ease;
+}
+
+@keyframes galleryFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-frame {
+    animation: none;
+  }
+}
+
+.gallery-nav {
+  position: absolute;
+  top: 50%;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  color: var(--ink);
+  font-size: 1.4rem;
+  line-height: 1;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.gallery-nav:hover {
+  border-color: var(--acc);
+}
+
+.gallery-nav:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+.gallery-nav.prev {
+  left: 8px;
+}
+
+.gallery-nav.next {
+  right: 8px;
+}
+
+.gallery-counter {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(23, 38, 77, 0.78);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.gallery-thumbs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.gallery-thumb-btn {
+  aspect-ratio: 1;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.gallery-thumb-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gallery-thumb-btn .no-image {
+  font-size: 0.6rem;
+}
+
+.gallery-thumb-btn:hover,
+.gallery-thumb-btn.on {
+  opacity: 1;
+}
+
+.gallery-thumb-btn.on {
+  border-color: var(--acc);
+  box-shadow: inset 0 0 0 1px var(--acc);
+}
+
+.gallery-thumb-btn:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}

@@ -1868,6 +1868,171 @@ ul.import-error {
 }
 
 /* --------------------------------------------------------------------------
+   Galeria de fotos no formulário de produto (até 5)
+   -------------------------------------------------------------------------- */
+.gallery-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gallery-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gallery-head .label {
+  margin: 0;
+}
+
+.gallery-count {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--mut);
+}
+
+.gallery-count.full {
+  color: var(--acc);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gallery-thumb {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gallery-img {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  background: var(--bg);
+}
+
+.gallery-thumb.cover .gallery-img {
+  border-color: var(--acc);
+  box-shadow: inset 0 0 0 1px var(--acc);
+}
+
+.gallery-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.gallery-img .no-image {
+  font-size: 0.65rem;
+}
+
+.gallery-badge {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  font-size: 0.62rem;
+}
+
+.gallery-new {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 0 5px;
+  border-radius: var(--r-tag);
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.gallery-actions {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.gallery-cover-btn {
+  width: 100%;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.gallery-add {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gallery-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 14px 12px;
+  border: 2px dashed var(--line);
+  border-radius: var(--r-input);
+  background: var(--card);
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.gallery-drop strong {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.gallery-drop span {
+  font-size: 0.75rem;
+  color: var(--mut);
+}
+
+.gallery-drop:hover,
+.gallery-drop.over {
+  border-color: var(--acc);
+}
+
+.gallery-drop.off {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.gallery-input:has(input[type="file"]:focus-visible) .gallery-drop {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+.gallery-url {
+  display: flex;
+  gap: 6px;
+}
+
+.gallery-url input {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .gallery-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* --------------------------------------------------------------------------
    7. Notebooks (< 1366px): mais espaço para a tabela
    -------------------------------------------------------------------------- */
 @media (max-width: 1365px) {

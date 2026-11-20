@@ -1,4 +1,5 @@
-import { useEffect, useId, useMemo } from 'react';
+import { useId } from 'react';
+import { useObjectUrl } from '../../hooks/useObjectUrl';
 import { isHttpUrl } from '../../lib/format';
 import { ALLOWED_IMAGE_TYPES } from '../../services/storageService';
 import { normalizeHex } from '../../types/catalog';
@@ -13,15 +14,6 @@ type ColorFieldsProps = {
 };
 
 const ACCEPT = Object.keys(ALLOWED_IMAGE_TYPES).join(',');
-
-/** URL temporária do arquivo escolhido, liberada ao trocar/desmontar. */
-function useObjectUrl(file: File | null): string | null {
-  const url = useMemo(() => (file ? URL.createObjectURL(file) : null), [file]);
-  useEffect(() => () => {
-    if (url) URL.revokeObjectURL(url);
-  }, [url]);
-  return url;
-}
 
 /**
  * Campos de cor de um código (categorias com cores, ex.: Tintas):
