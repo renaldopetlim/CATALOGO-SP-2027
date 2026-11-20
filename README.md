@@ -39,15 +39,19 @@ por qualquer um dos seus códigos.
      em texto, são criadas e vinculadas automaticamente.
    - `20261120000000_limpeza_importacoes.sql`: histórico de importações (desfazer planilha errada), exclusão de
      registros da base e análise de registros e arquivos sem uso.
+   - `20261121000000_usuarios_permissoes.sql`: usuários do painel com permissões granulares (veja
+     [docs/USUARIOS.md](docs/USUARIOS.md), que também explica a Edge Function `admin-users`).
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
-4. **Dar permissão de admin:** no *SQL Editor*, execute (trocando o e-mail):
+4. **Dar permissão de administrador** ao primeiro usuário: no *SQL Editor*, execute (trocando o e-mail).
+   Os próximos usuários são cadastrados pelo painel, em **Usuários e permissões**.
 
    ```sql
-   insert into public.admin_users (user_id)
-   select id from auth.users where email = 'admin@suaempresa.com.br'
-   on conflict do nothing;
+   insert into public.user_profiles (id, email, full_name, role, is_active)
+   select id, email, 'Administrador', 'admin', true
+   from auth.users where email = 'admin@suaempresa.com.br'
+   on conflict (id) do update set role = 'admin', is_active = true;
    ```
 
 5. **Copiar as chaves:** em *Project Settings → API Keys* (ou *Data API*), copie a **Project URL** e a chave
@@ -230,7 +234,8 @@ Para hospedar em outro lugar, gere o build com `BASE_PATH=/`.
 |---|---|
 | Tela "Não foi possível iniciar o catálogo" | `.env.local` ausente ou incompleto; reinicie o `npm run dev` |
 | Vitrine vazia, sem erro | Nenhum item ativo em categoria ativa, ou o SQL não foi executado |
-| Login ok, mas "Acesso restrito" | Usuário não está em `admin_users` (passo 1.4) |
+| Login ok, mas "Acesso restrito" | Usuário sem perfil em `user_profiles` (passo 1.4 ou painel Usuários) |
+| "Acesso bloqueado" | Perfil bloqueado em **Usuários e permissões** |
 | "Você não tem permissão…" ao salvar | Mesmo caso acima, ou sessão expirada: saia e entre de novo |
 | Upload recusado | Arquivo acima de 5 MB ou fora de JPEG/PNG/WebP/AVIF |
 | Página em branco no GitHub Pages | `REPO_BASE` do `vite.config.ts` diferente do nome do repositório; veja o [guia de deploy](docs/DEPLOY-GITHUB-PAGES.md) |

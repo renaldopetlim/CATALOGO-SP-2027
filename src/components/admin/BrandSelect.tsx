@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useAdminBrands } from '../../hooks/useAdminBrands';
+import { usePermissions } from '../../hooks/usePermissions';
 import { isServiceError } from '../../lib/errors';
 import { stripAccents } from '../../lib/format';
 import { createBrand } from '../../services/brandService';
@@ -29,6 +30,8 @@ export function BrandSelect({ value, onChange, hintName = '', suggestions = [], 
   const selectId = useId();
   const newId = useId();
   const { brands, status, update } = useAdminBrands();
+  // Criar marca exige a permissão de marcas (quem só edita produtos escolhe entre as existentes).
+  const canCreate = usePermissions().can('can_manage_brands');
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
@@ -48,7 +51,7 @@ export function BrandSelect({ value, onChange, hintName = '', suggestions = [], 
   const pickSuggestion = (name: string) => {
     const match = brands.find((brand) => sameName(brand.name, name));
     if (match) onChange(match.id);
-    else openCreate(name);
+    else if (canCreate) openCreate(name);
   };
 
   // Ativas + a marca atual (mesmo inativa), em ordem alfabética.
@@ -101,7 +104,7 @@ export function BrandSelect({ value, onChange, hintName = '', suggestions = [], 
             </option>
           ))}
         </select>
-        {!creating && (
+        {!creating && canCreate && (
           <button type="button" className="act" disabled={disabled} onClick={() => openCreate('')}>
             + Nova marca
           </button>
@@ -111,9 +114,13 @@ export function BrandSelect({ value, onChange, hintName = '', suggestions = [], 
       {!creating && hintName && !hintMatch && status === 'success' && !value && (
         <p className="hint warn brand-hint">
           A marca “{hintName}” ainda não está cadastrada.{' '}
-          <button type="button" className="tb-link" onClick={() => openCreate(hintName)} disabled={disabled}>
-            Criar “{hintName}”
-          </button>
+          {canCreate ? (
+            <button type="button" className="tb-link" onClick={() => openCreate(hintName)} disabled={disabled}>
+              Criar “{hintName}”
+            </button>
+          ) : (
+            'Peça a quem gerencia marcas para cadastrá-la.'
+          )}
         </p>
       )}
 
@@ -129,8 +136,8 @@ export function BrandSelect({ value, onChange, hintName = '', suggestions = [], 
                 type="button"
                 className={`chip chip-sm${current ? ' on' : ''}`}
                 aria-pressed={current}
-                disabled={disabled}
-                title={match ? `Usar ${match.name}` : `“${name}” ainda não está cadastrada: criar`}
+                disabled={disabled || (!match && !canCreate)}
+                title={match ? `Usar ${match.name}` : canCreate ? `“${name}” ainda não está cadastrada: criar` : `“${name}” ainda não está cadastrada`}
                 onClick={() => pickSuggestion(name)}
               >
                 {match ? match.name : `+ ${name}`}

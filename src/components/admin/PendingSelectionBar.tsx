@@ -12,12 +12,25 @@ type PendingSelectionBarProps = {
   onDelete: () => void;
   onClear: () => void;
   busy?: boolean;
+  /** Motivo de cada ação estar bloqueada por permissão (`undefined` = liberada). */
+  createLock?: string;
+  deleteLock?: string;
 };
 
 const PREVIEW_CODES = 6;
 
 /** Barra fixa no rodapé da aba Pendentes enquanto houver códigos marcados. */
-export function PendingSelectionBar({ rows, cardRows, hiddenCount, onCreate, onDelete, onClear, busy = false }: PendingSelectionBarProps) {
+export function PendingSelectionBar({
+  rows,
+  cardRows,
+  hiddenCount,
+  onCreate,
+  onDelete,
+  onClear,
+  busy = false,
+  createLock,
+  deleteLock,
+}: PendingSelectionBarProps) {
   const count = rows.length;
   const cardCount = cardRows.length;
   const inCatalog = count - cardCount;
@@ -42,20 +55,21 @@ export function PendingSelectionBar({ rows, cardRows, hiddenCount, onCreate, onD
         <button type="button" className="sec btn-sm" onClick={onClear} disabled={busy}>
           Limpar seleção
         </button>
-        <button type="button" className="sec btn-sm danger-outline" onClick={onDelete} disabled={busy}>
+        <button type="button" className="sec btn-sm danger-outline" onClick={onDelete} disabled={busy || !!deleteLock} title={deleteLock}>
           Excluir selecionados ({count.toLocaleString('pt-BR')})
         </button>
         <button
           type="button"
           className="pri btn-sm"
           onClick={onCreate}
-          disabled={busy || cardCount === 0}
+          disabled={busy || cardCount === 0 || !!createLock}
           title={
-            cardCount === 0
+            createLock ??
+            (cardCount === 0
               ? 'Os códigos marcados já estão em produtos do catálogo'
               : inCatalog > 0
                 ? `${inCatalog} código(s) já no catálogo ficam fora do card`
-                : undefined
+                : undefined)
           }
         >
           Criar card com selecionados ({cardCount.toLocaleString('pt-BR')})

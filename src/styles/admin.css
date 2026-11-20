@@ -1494,6 +1494,290 @@ ul.import-error {
 }
 
 /* --------------------------------------------------------------------------
+   Usuários e permissões
+   -------------------------------------------------------------------------- */
+.sb-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sb-role {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--acc);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sb-password {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+}
+
+.sb-password:hover,
+.sb-password:focus-visible {
+  color: var(--white);
+  text-decoration: underline;
+}
+
+.readonly-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px var(--admin-gutter) 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--mut);
+  border-radius: var(--r-input);
+  background: var(--bg);
+  color: var(--mut);
+  font-size: 0.85rem;
+}
+
+.cell-strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.badge-me {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: var(--white);
+  font-size: 0.68rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.users-table {
+  min-width: 1000px;
+}
+
+.user-email {
+  word-break: break-all;
+}
+
+.perm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 320px;
+}
+
+.perm-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-tag);
+  background: var(--bg);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.perm-chip.all {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: var(--white);
+}
+
+.txt-ok {
+  color: var(--ok);
+}
+
+.permission-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.role-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.role-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+  background: var(--card);
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.role-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.role-card b {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.role-card span {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--mut);
+}
+
+.role-card.on {
+  border-color: var(--acc);
+  box-shadow: inset 0 0 0 1px var(--acc);
+  background: color-mix(in srgb, var(--acc) 6%, var(--card));
+}
+
+.role-card:has(input:focus-visible) {
+  outline: 2px solid var(--acc);
+  outline-offset: 1px;
+}
+
+.role-card.off {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.permission-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--r-input);
+}
+
+.permission-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.permission-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.permission-list input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  padding: 0;
+  flex-shrink: 0;
+  accent-color: var(--acc);
+}
+
+.permission-list label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.permission-list label b {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.permission-list label span {
+  font-size: 0.8rem;
+  color: var(--mut);
+}
+
+.permission-list code {
+  font-size: 0.7rem;
+  color: var(--mut);
+}
+
+.access-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.access-password {
+  max-width: 320px;
+  margin-top: 4px;
+}
+
+.access-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}
+
+.access-toggle b {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.password-tools {
+  margin-top: 16px;
+}
+
+.password-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.password-row > div {
+  flex: 1;
+  max-width: 320px;
+}
+
+.password-row .hint {
+  margin: 0;
+}
+
+.password-row > button {
+  flex-shrink: 0;
+}
+
+.recovery-link {
+  display: flex;
+  gap: 8px;
+}
+
+.recovery-link input {
+  flex: 1;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1100px) {
+  .role-presets {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
    7. Notebooks (< 1366px): mais espaço para a tabela
    -------------------------------------------------------------------------- */
 @media (max-width: 1365px) {

@@ -62,14 +62,3 @@ export async function getCurrentSession(): Promise<Session | null> {
     throw toServiceError(error, 'verificar a sessão');
   }
 }
-
-/** Consulta a função `is_admin()` do banco (usuário logado está em `admin_users`?). */
-export async function checkIsAdmin(): Promise<boolean> {
-  try {
-    const { data, error } = await supabase.rpc('is_admin');
-    if (error) throw error;
-    return data === true;
-  } catch (error) {
-    throw toServiceError(error, 'verificar a permissão de administrador');
-  }
-}

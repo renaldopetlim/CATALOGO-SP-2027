@@ -75,7 +75,9 @@ modal de detalhes, recarregar a página ou compartilhar o link preserva o estado
 | `import_batches` | Uma linha por planilha importada (arquivo, data, quem, contadores, `undone_at`). **Só admin** |
 | `import_batch_items` | Estado anterior dos códigos tocados pela **última** importação, para desfazê-la. **Só admin** |
 | `catalog_item_codes` | Códigos do produto (código **único no catálogo**, descrição, embalagem, ordem); `item_id` → `catalog_items.id` (`ON DELETE CASCADE`) |
-| `admin_users` | Lista de usuários do Auth com permissão de administrador |
+| `user_profiles` | Usuário do painel: nome, papel (`admin`/`editor`/`viewer`), status e `permissions` (jsonb com 6 chaves). Ver [USUARIOS.md](USUARIOS.md) |
+| `user_invites` | Acesso pré-cadastrado por e-mail; vira perfil quando a conta é criada no Auth |
+| `admin_users` | Legado: migrado para `user_profiles` (não é mais usado pelas regras) |
 
 **Triggers em `catalog_items`:**
 - `set_updated_at`: atualiza `updated_at` em todo UPDATE.
@@ -113,11 +115,14 @@ Excluir da base nunca afeta o catálogo: `catalog_item_codes` não tem chave est
 |---|---|---|---|
 | Visitante (`anon`) | lê ativas | lê ativos **de categorias ativas** | abre imagens pela URL pública |
 | Usuário logado sem ser admin | igual ao visitante | igual ao visitante | igual ao visitante |
-| Admin (`admin_users`) | lê tudo, cria, edita, exclui | lê tudo, cria, edita, exclui | lista, envia, substitui, remove |
+| Perfil ativo (`is_staff()`) | lê tudo | lê tudo | lista |
+| … com a permissão | `can_manage_categories` grava | `can_manage_products` grava | envia/remove na pasta da permissão (`items/` produtos, `brands/` marcas); `can_cleanup_storage` remove órfãos |
 
 `catalog_item_codes` segue o produto: o visitante só lê os códigos de produtos visíveis, e só o admin grava.
 
-"Admin" não significa só "estar logado": o usuário também precisa constar em `admin_users`.
+Estar logado não basta: o usuário precisa de um perfil **ativo** em `user_profiles`, e cada gravação exige a
+permissão correspondente (`has_permission()`). `is_admin()` continua existindo por compatibilidade e hoje
+significa "perfil ativo".
 Isso evita que alguém crie uma conta pelo Auth e ganhe acesso de escrita. Mesmo assim,
 **desative cadastros públicos** em *Authentication → Sign In / Providers → Allow new users to sign up*.
 
@@ -127,7 +132,7 @@ Isso evita que alguém crie uma conta pelo Auth e ganhe acesso de escrita. Mesmo
  PAINEL ADMIN (/admin)                 SUPABASE                         VITRINE PÚBLICA (/, /catalogo)
  ─────────────────────                 ────────                         ──────────────────────────────
  1. Login (email/senha) ─────────────▶ Auth emite JWT
- 2. useAuth consulta admin_users ────▶ RLS: só a própria linha
+ 2. useAuth carrega user_profiles ───▶ RLS: só a própria linha
  3. Upload de imagem ────────────────▶ Storage catalog-images
                         ◀──────────── URL pública
  4. Salvar item (com image_url) ─────▶ PostgreSQL

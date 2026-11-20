@@ -12,6 +12,8 @@ import { Toast } from '../../components/ui/Toast';
 import { useAdminBrands } from '../../hooks/useAdminBrands';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { useToast } from '../../hooks/useToast';
+import { ReadOnlyNotice } from '../../components/auth/RequirePermission';
+import { usePermissions } from '../../hooks/usePermissions';
 import { isServiceError } from '../../lib/errors';
 import { stripAccents } from '../../lib/format';
 import { deleteBrand, setBrandActive } from '../../services/brandService';
@@ -26,6 +28,9 @@ export function AdminBrandsPage() {
   useDocumentTitle('Admin · Marcas');
   const { brands, status, error, reload } = useAdminBrands();
   const { toast, show, dismiss } = useToast();
+  const { can, restrictedTitle } = usePermissions();
+  const canEdit = can('can_manage_brands');
+  const lock = canEdit ? undefined : restrictedTitle('can_manage_brands');
 
   const [editing, setEditing] = useState<Editing | null>(null);
   const [deleting, setDeleting] = useState<BrandWithProductCount | null>(null);
@@ -101,13 +106,14 @@ export function AdminBrandsPage() {
           </>
         }
         action={
-          <button type="button" className="pri" onClick={() => setEditing({ mode: 'create' })}>
+          <button type="button" className="pri" onClick={() => setEditing({ mode: 'create' })} disabled={!canEdit} title={lock}>
             + Nova marca
           </button>
         }
       />
 
       <div className="admin-content">
+        <ReadOnlyNotice permission="can_manage_brands" />
         {status === 'loading' && (
           <p className="admin-pad state" role="status">
             Carregando marcas…
@@ -153,9 +159,13 @@ export function AdminBrandsPage() {
                       <BrandLogo name={brand.name} logoUrl={brand.logo_url} size="md" />
                     </td>
                     <td className="col-title">
-                      <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', brand })}>
-                        {brand.name}
-                      </button>
+                      {canEdit ? (
+                        <button type="button" className="cell-link" onClick={() => setEditing({ mode: 'edit', brand })}>
+                          {brand.name}
+                        </button>
+                      ) : (
+                        <span className="cell-strong">{brand.name}</span>
+                      )}
                       {!brand.logo_url && <span className="cell-sub">Sem logo</span>}
                     </td>
                     <td className="col-switch">
@@ -163,7 +173,8 @@ export function AdminBrandsPage() {
                         checked={brand.is_active}
                         text={brand.is_active ? 'Ativa' : 'Inativa'}
                         label={`${brand.is_active ? 'Inativar' : 'Ativar'} a marca “${brand.name}”`}
-                        disabled={busy}
+                        disabled={busy || !canEdit}
+                        title={lock}
                         onChange={(next) => void toggleActive(brand, next)}
                       />
                     </td>
@@ -181,10 +192,10 @@ export function AdminBrandsPage() {
                     </td>
                     <td className="col-actions">
                       <div className="row-actions">
-                        <button type="button" className="act" disabled={busy} onClick={() => setEditing({ mode: 'edit', brand })}>
+                        <button type="button" className="act" disabled={busy || !canEdit} title={lock} onClick={() => setEditing({ mode: 'edit', brand })}>
                           Editar
                         </button>
-                        <button type="button" className="act danger-text" disabled={busy} onClick={() => setDeleting(brand)}>
+                        <button type="button" className="act danger-text" disabled={busy || !canEdit} title={lock} onClick={() => setDeleting(brand)}>
                           Excluir
                         </button>
                       </div>

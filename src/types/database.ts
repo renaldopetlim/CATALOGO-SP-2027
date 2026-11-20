@@ -264,6 +264,69 @@ export type Database = {
           },
         ];
       };
+      user_profiles: {
+        Row: {
+          id: string;
+          email: string;
+          full_name: string;
+          role: string;
+          is_active: boolean;
+          permissions: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          email?: string;
+          full_name?: string;
+          role?: string;
+          is_active?: boolean;
+          permissions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          email?: string;
+          full_name?: string;
+          role?: string;
+          is_active?: boolean;
+          permissions?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      user_invites: {
+        Row: {
+          email: string;
+          full_name: string;
+          role: string;
+          is_active: boolean;
+          permissions: Json;
+          invited_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          email: string;
+          full_name?: string;
+          role?: string;
+          is_active?: boolean;
+          permissions?: Json;
+          invited_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          email?: string;
+          full_name?: string;
+          role?: string;
+          is_active?: boolean;
+          permissions?: Json;
+          invited_by?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       import_batches: {
         Row: {
           id: string;
@@ -369,6 +432,31 @@ export type Database = {
       import_system_products: {
         Args: { p_rows: Json; p_batch_id?: string | null };
         Returns: Json;
+      };
+      has_permission: {
+        Args: { p_permission: string };
+        Returns: boolean;
+      };
+      is_staff: {
+        Args: never;
+        Returns: boolean;
+      };
+      admin_list_users: {
+        Args: never;
+        Returns: Array<{
+          id: string | null;
+          email: string;
+          full_name: string;
+          role: string | null;
+          is_active: boolean;
+          permissions: Json;
+          status: string;
+          created_at: string;
+          updated_at: string;
+          last_sign_in_at: string | null;
+          email_confirmed: boolean;
+          banned: boolean;
+        }>;
       };
       start_import_batch: {
         Args: { p_file_name: string };
