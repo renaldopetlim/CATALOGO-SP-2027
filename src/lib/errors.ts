@@ -133,8 +133,11 @@ function fromPostgrest(error: PostgrestLikeError, context: string): ServiceError
         'Sua sessão expirou. Confira se a data e a hora do computador estão corretas e entre novamente.',
         opts,
       );
-    default:
-      return new ServiceError('unknown', `Não foi possível ${context}. Tente novamente.`, opts);
+    default: {
+      // Erro não previsto: mostra o detalhe técnico para facilitar o diagnóstico.
+      const detail = error.message && !isNetworkFailure(error.message) ? ` (Detalhe: ${error.message})` : '';
+      return new ServiceError('unknown', `Não foi possível ${context}. Tente novamente.${detail}`, opts);
+    }
   }
 }
 
