@@ -116,6 +116,9 @@ function fromPostgrest(error: PostgrestLikeError, context: string): ServiceError
       return new ServiceError('validation', `Dados inválidos ao ${context}. Revise os campos.`, opts);
     case '42501':
       return new ServiceError('permission', 'Você não tem permissão para esta operação. Entre com uma conta de administrador.', opts);
+    case 'P0001':
+      // RAISE EXCEPTION das funções do banco: a mensagem já é para o usuário.
+      return new ServiceError('validation', error.message || `Não foi possível ${context}.`, opts);
     case 'P0002':
       return new ServiceError('not_found', error.message || 'Registro não encontrado.', opts);
     case 'PGRST116':
@@ -123,6 +126,13 @@ function fromPostgrest(error: PostgrestLikeError, context: string): ServiceError
     case 'PGRST301':
     case 'PGRST302':
       return new ServiceError('auth', 'Sua sessão expirou. Entre novamente.', opts);
+    case 'PGRST303':
+      // Token recusado como vencido: sessão antiga ou relógio do computador errado.
+      return new ServiceError(
+        'auth',
+        'Sua sessão expirou. Confira se a data e a hora do computador estão corretas e entre novamente.',
+        opts,
+      );
     default:
       return new ServiceError('unknown', `Não foi possível ${context}. Tente novamente.`, opts);
   }

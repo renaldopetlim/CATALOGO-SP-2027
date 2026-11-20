@@ -37,6 +37,8 @@ por qualquer um dos seus códigos.
    - `20261119040000_base_sistema.sql`: base do sistema interno (importação de planilha) e conciliação com o catálogo.
    - `20261119050000_marcas.sql`: cadastro de marcas com logo, vinculado aos produtos. As marcas atuais, que estão
      em texto, são criadas e vinculadas automaticamente.
+   - `20261120000000_limpeza_importacoes.sql`: histórico de importações (desfazer planilha errada), exclusão de
+     registros da base e análise de registros e arquivos sem uso.
 2. **Bloquear cadastro público:** *Authentication → Sign In / Providers* → desative **Allow new users to sign up**.
 3. **Criar o administrador:** *Authentication → Users → Add user → Create new user*, informe e-mail e senha
    e marque **Auto Confirm User**.
@@ -160,7 +162,30 @@ No painel, em **Sistema interno**:
 
   Ao salvar, os códigos saem da lista de pendentes na hora e a seleção é limpa.
 
+- **Excluir registros da base:** em Pendentes, cada linha tem a lixeira (com confirmação) e a barra de seleção
+  tem **Excluir selecionados (N)**. A situação **Toda a base** mostra também os publicados. Um código que está
+  num produto é sinalizado como **Em uso no catálogo**: só o registro da planilha sai da base, o produto continua
+  igual.
+- **Histórico de importações** (em Importar planilha): cada planilha vira um lote. A **mais recente** pode ser
+  **desfeita** por completo (os códigos que ela incluiu são excluídos e os que ela alterou voltam ao que eram).
+  De qualquer importação dá para **excluir os registros que ela criou**.
+
 A base do sistema só é visível para administradores.
+
+### Saúde e limpeza
+
+Em **Sistema interno → Saúde e limpeza** (o menu mostra quantos itens pedem atenção):
+
+- **Resumo:** espaço ocupado pelas imagens, arquivos sem uso, tamanho da base e registros sem uso.
+- **Registros sem uso:** códigos da base que **não estão em nenhum produto** e não vieram na última planilha
+  (ou não aparecem em planilhas há mais de 30/60/90/180/365 dias). **Limpar registros não utilizados** exclui
+  todos de uma vez. Códigos em uso no catálogo nunca entram nessa lista.
+- **Arquivos sem uso no Storage:** imagens do bucket `catalog-images` que não estão em `image_url` de nenhum
+  produto nem em `logo_url` de nenhuma marca, com miniatura, tamanho e data. Exclua um por um ou use **Liberar
+  espaço**. Antes de excluir, o banco confere de novo e mantém o arquivo que passou a ser usado. Arquivos
+  enviados há menos de 1 hora não entram (envio em andamento).
+
+Tudo isso é restrito a administradores (`is_admin()`), não a qualquer usuário logado.
 
 ## Atualização em tempo real (Supabase Realtime)
 

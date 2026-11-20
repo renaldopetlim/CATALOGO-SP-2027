@@ -105,3 +105,13 @@ export function formatDateTime(iso: string): string {
   const date = new Date(iso);
   return Number.isNaN(date.getTime()) ? '' : DATE_TIME.format(date).replace(',', '');
 }
+
+/** Tamanho legível em pt-BR: "850 B", "12,4 KB", "3,2 MB", "1,05 GB". */
+export function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'] as const;
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / 1024 ** exponent;
+  const digits = exponent === 0 ? 0 : value < 10 ? 2 : value < 100 ? 1 : 0;
+  return `${value.toLocaleString('pt-BR', { maximumFractionDigits: digits })} ${units[exponent] ?? 'B'}`;
+}

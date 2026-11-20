@@ -1,9 +1,16 @@
 import { useId, useRef, useState, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminTopbar } from '../../components/admin/AdminTopbar';
+import { ImportHistory } from '../../components/admin/ImportHistory';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { Toast } from '../../components/ui/Toast';
+import { useImportBatches } from '../../hooks/useImportBatches';
+import { useToast } from '../../hooks/useToast';
+import { notifyCleanupChanged } from '../../lib/cleanupEvents';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { isServiceError } from '../../lib/errors';
 import { ACCEPTED_EXTENSIONS, buildPreview, readSpreadsheet } from '../../lib/spreadsheet';
+import { startImportBatch, undoImportBatch } from '../../services/importService';
 import { importSystemProducts } from '../../services/systemProductsService';
 import type { ImportPreview, ImportProgress, ImportSummary, PreviewRowStatus, RawSheet } from '../../types/systemProducts';
 
@@ -12,7 +19,7 @@ type Stage =
   | { name: 'reading'; fileName: string }
   | { name: 'preview'; sheet: RawSheet; preview: ImportPreview }
   | { name: 'importing'; preview: ImportPreview; progress: ImportProgress }
-  | { name: 'done'; preview: ImportPreview; summary: ImportSummary };
+  | { name: 'done'; preview: ImportPreview; summary: ImportSummary; batchId: string; undone: boolean };
 
 type RowFilter = 'all' | PreviewRowStatus;
 
@@ -33,6 +40,10 @@ export function AdminImportPage() {
   const [uppercaseDescription, setUppercaseDescription] = useState(false);
   const [rowFilter, setRowFilter] = useState<RowFilter>('all');
   const [dragging, setDragging] = useState(false);
+  const history = useImportBatches();
+  const { toast, show, dismiss } = useToast();
+  const [confirmUndo, setConfirmUndo] = useState(false);
+  const [undoing, setUndoing] = useState(false);
 
   const handleFile = async (file: File) => {
     setError(null);
@@ -56,14 +67,43 @@ export function AdminImportPage() {
     }
   };
 
-  const runImport = async (preview: ImportPreview) => {
+  const runImport = async (sheet: RawSheet, preview: ImportPreview) => {
     const valid = preview.rows.filter((row) => row.status === 'valid').map(({ code, description, brand }) => ({ code, description, brand }));
     setStage({ name: 'importing', preview, progress: { sent: 0, total: valid.length } });
+    let batchId: string;
+    try {
+      // Registra a importação no histórico (permite desfazê-la depois).
+      batchId = await startImportBatch(preview.fileName);
+    } catch (err) {
+      setError(isServiceError(err) ? err.message : 'Não foi possível iniciar a importação.');
+      setStage({ name: 'preview', sheet, preview });
+      return;
+    }
     const summary = await importSystemProducts(valid, {
       ignored: preview.invalid + preview.duplicate,
+      batchId,
       onProgress: (progress) => setStage({ name: 'importing', preview, progress }),
     });
-    setStage({ name: 'done', preview, summary });
+    setStage({ name: 'done', preview, summary, batchId, undone: false });
+    notifyCleanupChanged();
+    history.reload();
+  };
+
+  const undoThisImport = async () => {
+    if (stage.name !== 'done') return;
+    setUndoing(true);
+    try {
+      const result = await undoImportBatch(stage.batchId);
+      setStage({ ...stage, undone: true });
+      show('ok', `Importação desfeita: ${result.deleted.toLocaleString('pt-BR')} registro(s) novo(s) excluído(s) e ${result.restored.toLocaleString('pt-BR')} restaurado(s).`);
+      notifyCleanupChanged();
+      setConfirmUndo(false);
+    } catch (err) {
+      show('err', isServiceError(err) ? err.message : 'Não foi possível desfazer a importação.');
+    } finally {
+      setUndoing(false);
+      history.reload();
+    }
   };
 
   const reset = () => {
@@ -188,9 +228,14 @@ export function AdminImportPage() {
                     <input type="checkbox" checked={uppercaseDescription} onChange={(e) => toggleUppercase(e.target.checked)} />
                     Descrição em MAIÚSCULAS
                   </label>
-                  <button type="button" className="pri" disabled={preview.valid === 0} onClick={() => void runImport(preview)}>
+                  <button type="button" className="pri" disabled={preview.valid === 0} onClick={() => stage.name === 'preview' && void runImport(stage.sheet, preview)}>
                     Importar {preview.valid.toLocaleString('pt-BR')} {preview.valid === 1 ? 'registro' : 'registros'}
                   </button>
+                </div>
+              )}
+              {stage.name === 'preview' && error && (
+                <div className="import-error" role="alert">
+                  {error}
                 </div>
               )}
               {stage.name === 'preview' && preview.invalid + preview.duplicate > 0 && (
@@ -208,7 +253,9 @@ export function AdminImportPage() {
                 </div>
               )}
 
-              {stage.name === 'done' && <ImportResult summary={stage.summary} />}
+              {stage.name === 'done' && (
+                <ImportResult summary={stage.summary} undone={stage.undone} onUndo={() => setConfirmUndo(true)} />
+              )}
 
               <div className="preview-scroll">
                 <table className="admin-table preview-table">
@@ -246,13 +293,43 @@ export function AdminImportPage() {
               )}
             </section>
           )}
+
+          {/* Histórico: só na tela inicial (escolher arquivo) e no resultado */}
+          {(stage.name === 'idle' || stage.name === 'done') && (
+            <ImportHistory
+              batches={history.data}
+              status={history.status}
+              error={history.error}
+              reload={history.reload}
+              onResult={(tone, message) => show(tone, message)}
+            />
+          )}
         </div>
       </div>
+
+      {confirmUndo && stage.name === 'done' && (
+        <ConfirmDialog
+          title="Desfazer esta importação?"
+          confirmLabel="Desfazer importação"
+          tone="danger"
+          busy={undoing}
+          onConfirm={() => void undoThisImport()}
+          onCancel={() => setConfirmUndo(false)}
+        >
+          <p>
+            Os {stage.summary.inserted.toLocaleString('pt-BR')} código(s) incluídos por <strong>{stage.preview.fileName}</strong> são
+            excluídos e os {stage.summary.updated.toLocaleString('pt-BR')} alterados voltam à descrição e à marca anteriores.
+          </p>
+          <p className="hint">Produtos do catálogo não são alterados.</p>
+        </ConfirmDialog>
+      )}
+
+      <Toast toast={toast} onDismiss={dismiss} />
     </>
   );
 }
 
-function ImportResult({ summary }: { summary: ImportSummary }) {
+function ImportResult({ summary, undone, onUndo }: { summary: ImportSummary; undone: boolean; onUndo: () => void }) {
   const items: Array<[string, number, string]> = [
     ['Inseridos', summary.inserted, 'ok'],
     ['Atualizados', summary.updated, 'ok'],
@@ -277,9 +354,22 @@ function ImportResult({ summary }: { summary: ImportSummary }) {
           ))}
         </ul>
       )}
-      <Link to="/admin/pendentes" className="pri btn-link result-link">
-        Ver pendentes no catálogo →
-      </Link>
+      {undone ? (
+        <p className="hint warn" role="status">
+          Esta importação foi desfeita: a base voltou ao estado anterior.
+        </p>
+      ) : (
+        <div className="result-actions">
+          <Link to="/admin/pendentes" className="pri btn-link result-link">
+            Ver pendentes no catálogo →
+          </Link>
+          {summary.received > 0 && (
+            <button type="button" className="sec" onClick={onUndo}>
+              Planilha errada? Desfazer esta importação
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

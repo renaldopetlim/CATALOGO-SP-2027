@@ -97,8 +97,8 @@ export type ReconciliationRow = Pick<SystemProduct, 'code' | 'description' | 'br
   status: ReconciliationStatus;
 };
 
-/** `pending` = `missing` + `inactive` (não aparecem na vitrine). */
-export type ReconciliationFilter = 'pending' | ReconciliationStatus;
+/** `pending` = `missing` + `inactive` (não aparecem na vitrine); `all` = base inteira. */
+export type ReconciliationFilter = 'pending' | 'all' | ReconciliationStatus;
 
 export type ReconciliationFilters = {
   filter: ReconciliationFilter;

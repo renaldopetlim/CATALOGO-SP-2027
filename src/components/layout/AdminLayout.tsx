@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useCleanupBadge } from '../../hooks/useCleanupBadge';
 import { assetUrl, SITE_ROOT_URL } from '../../lib/assets';
 import { LiveIndicator } from '../ui/LiveIndicator';
 // CSS só do painel: fica no pacote carregado sob demanda, a vitrine não o recebe.
@@ -20,6 +21,7 @@ const ICONS = {
   brands: 'M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01',
   pending: 'M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
   upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
+  cleanup: 'M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v6M14 11v6',
   store: 'M14 3h7v7M10 14 21 3M21 14v7H3V3h7',
   logout: 'M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 17l5-5-5-5M15 12H3',
 };
@@ -29,6 +31,7 @@ export function AdminLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
+  const cleanupCount = useCleanupBadge();
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -75,6 +78,16 @@ export function AdminLayout() {
           <NavLink to="/admin/importar">
             <NavIcon path={ICONS.upload} />
             Importar planilha
+          </NavLink>
+          <NavLink to="/admin/limpeza">
+            <NavIcon path={ICONS.cleanup} />
+            Saúde e limpeza
+            {cleanupCount > 0 && (
+              <span className="sb-badge" title="Arquivos e registros sem uso">
+                {cleanupCount > 99 ? '99+' : cleanupCount}
+                <span className="sr-only"> itens para limpar</span>
+              </span>
+            )}
           </NavLink>
           <span className="sb-section">Vitrine</span>
           <a href={SITE_ROOT_URL} target="_blank" rel="noopener">
